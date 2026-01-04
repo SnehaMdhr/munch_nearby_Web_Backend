@@ -6,10 +6,8 @@ import { connectDatabase } from "./database/mongodb";
 import { PORT } from "./config";
 
 dotenv.config();
-//can use .env variable below this 
 console.log(process.env.PORT);
 const app: Application = express();
-// const PORT: number = 3000;
 
 app.use(bodyParser.json());
 

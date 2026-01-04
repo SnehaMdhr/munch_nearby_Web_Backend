@@ -16,7 +16,7 @@ export class UserService {
             throw new HttpError(403,"Email already in use");
         }
         //hash password 
-        const hashedPassword = await bcryptjs.hash(data.password,10); //10 complexity 
+        const hashedPassword = await bcryptjs.hash(data.password,10); 
         data.password = hashedPassword;
 
         //create user 
@@ -34,8 +34,8 @@ export class UserService {
         if(!validPassword){
             throw new HttpError(401,"Invalid credintial");
         }
-        //generate jwt
-        const payload = { //user identifier 
+        
+        const payload = {
             id:user._id,
             email: user.email,
             name: user.name,           
