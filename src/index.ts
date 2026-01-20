@@ -4,11 +4,21 @@ import authRoute from "./routes/auth.routes";
 import dotenv from "dotenv";
 import { connectDatabase } from "./database/mongodb";
 import { PORT } from "./config";
+import morgan from "morgan";
+import cors from "cors";
 
 dotenv.config();
 console.log(process.env.PORT);
 const app: Application = express();
 
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
+app.use(morgan("dev"));
 app.use(bodyParser.json());
 
 app.use("/api/auth", authRoute);
