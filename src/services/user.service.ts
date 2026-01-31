@@ -45,6 +45,13 @@ export class UserService {
         return {token,user}
     }
 
+    async getUserById(id: string){
+        const user = await userRepository.getUsersById(id);
+        if(!user){
+            throw new HttpError(404, "User not found");
+        }
+        return user;
+    }
     async updateUser(id: string, data: UpdateUserDTO){
         const user = await userRepository.getUsersById(id);
         if(!user){

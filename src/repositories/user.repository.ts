@@ -32,6 +32,7 @@ export class UserRepository implements IUserRepository {
         );
         return updatedUser;
     }
+    
     async deleteUser(id: string): Promise<boolean> {
         const result = await UserModel.findByIdAndDelete(id);
         return result ? true : false;

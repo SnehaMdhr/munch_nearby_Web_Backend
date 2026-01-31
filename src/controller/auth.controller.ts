@@ -47,6 +47,26 @@ export class AuthController{
         }
     }
 
+    async getUserById(req: Request, res: Response){
+        try{
+            const userId = req.user?._id;
+            
+            if(!userId){
+                return res.status(400).json(
+                    {success: false, message: "User Id not provided"}
+                );
+            }
+            const user = await userService.getUserById(userId);
+            return res.status(200).json(
+                {success: true, message:"user fetched successfully", data: user}
+            );
+        }catch(error: Error | any){
+            return res.status(error.statuCode??500).json(
+                {success: false, message: error.messaage ||"internal Server error"}
+            );
+        }
+    }
+
     async updateUser(req: Request, res: Response) {
         try{
             const userId = req.user?._id;

@@ -8,6 +8,7 @@ const router = Router();
 
 router.post("/register", authController.register)
 router.post("/login",authController.login)
-router.put("/update-profile", uploads.single("image"),authController.updateUser);
+router.get("/whoami", authorizedMiddleware, authController.getUserById);
+router.put("/update-profile", authorizedMiddleware,uploads.single("image"),authController.updateUser);
 
 export default router;
