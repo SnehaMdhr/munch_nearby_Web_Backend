@@ -1,3 +1,4 @@
+import { QueryFilter } from "mongoose";
 import { UserModel, IUser } from "../model/user.model";
 
 export interface IUserRepository {
@@ -7,6 +8,8 @@ export interface IUserRepository {
     getAllUsers(): Promise<IUser[]>;
     updateUser(id:string, updateData: Partial<IUser>): Promise<IUser | null>;
     deleteUser(id:string): Promise<boolean>;
+     getAllPaginated(page: number, size: number, search?: string)
+        : Promise<{ users: IUser[]; total: number }>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -22,6 +25,27 @@ export class UserRepository implements IUserRepository {
         const user = await UserModel.findOne({"_id":id});
         return user;
     }
+    async getAllPaginated(page: number, size: number, search?: string) {
+    const query: QueryFilter<IUser> = {};
+
+    if (search) {
+        query.$or = [
+            { name: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    const total = await UserModel.countDocuments(query);
+
+    const users = await UserModel.find(query)
+        .skip((page - 1) * size)
+        .limit(size)
+        .select('name email role createdAt') // send only what admin needs
+        .sort({ createdAt: -1 });
+
+        return { users, total };
+    }
+
     async getAllUsers(): Promise<IUser[]> {
         const users = await UserModel.find();
         return users;

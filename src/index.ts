@@ -1,5 +1,6 @@
 import express, {Application, Request, Response} from "express";
 import bodyParser from "body-parser";
+import authUserRoute from "./routes/admin/user.route";
 import authRoute from "./routes/auth.routes";
 import dotenv from "dotenv";
 import { connectDatabase } from "./database/mongodb";
@@ -13,19 +14,19 @@ console.log(process.env.PORT);
 const app: Application = express();
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
+let corsOptions = {
+    origin: ["http://localhost:3000", "http://localhost:3005"],
+    // which domain can access your backend server
+    // add frontend domain in origin 
+}
+// origin: "*", // allow all domain to access your backend server
+app.use(cors(corsOptions)); 
 
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 
 app.use("/api/auth", authRoute);
-
+app.use('/api/admin/users', authUserRoute);
 
 app.get("/", (req: Request, res: Response)=>{
     res.send("Hello World!");
