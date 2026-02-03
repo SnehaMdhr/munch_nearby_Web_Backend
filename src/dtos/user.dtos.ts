@@ -5,7 +5,8 @@ export const CreateUserDto = userSchema.pick(
         name:true, 
         email: true,
         role: true,
-        password: true
+        password: true,
+        imageUrl: true
     }
 ).extend(
     {
