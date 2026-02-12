@@ -11,12 +11,6 @@ router.get(
   restaurantController.getAllRestaurants
 );
 
-// Get restaurant by ID
-router.get(
-  "/:id",
-  restaurantController.getRestaurantById
-);
-
 // Create restaurant
 router.post(
   "/create",
@@ -32,6 +26,12 @@ router.get(
   authorizedMiddleware,
   restaurantOwnerOnlyMiddleware,
   restaurantController.getMyRestaurant
+);
+
+// Get restaurant by ID
+router.get(
+  "/:id",
+  restaurantController.getRestaurantById
 );
 
 // Update my restaurant
