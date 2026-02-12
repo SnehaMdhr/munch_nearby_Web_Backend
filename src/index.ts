@@ -8,6 +8,7 @@ import { PORT } from "./config";
 import morgan from "morgan";
 import cors from "cors";
 import path from "path";
+import restaurantRoute from "./routes/restaurant.routes";
 
 dotenv.config();
 console.log(process.env.PORT);
@@ -27,6 +28,7 @@ app.use(bodyParser.json());
 
 app.use("/api/auth", authRoute);
 app.use('/api/admin/users', authUserRoute);
+app.use("/api/restaurant", restaurantRoute);
 
 app.get("/", (req: Request, res: Response)=>{
     res.send("Hello World!");
