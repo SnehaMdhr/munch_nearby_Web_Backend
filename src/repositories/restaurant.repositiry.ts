@@ -37,6 +37,10 @@ export class RestaurantRepository implements IRestaurantRepository {
   async getRestaurantById(
     id: string
   ): Promise<IRestaurant | null> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return null;
+    }
+
     return await RestaurantModel.findById(id)
       .populate("owner", "name email role");
   }
