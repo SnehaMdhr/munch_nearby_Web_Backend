@@ -73,3 +73,22 @@ export const restaurantOwnerOnlyMiddleware =
       });
     }
   };
+
+  export const customerOnlyMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        throw new HttpError(403, "Forbidden: No user info");
+      }
+
+      if (req.user.role !== "Customer") {
+        throw new HttpError(403, "Forbidden: Customers only");
+      }
+
+      return next();
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 403).json({
+        success: false,
+        message: error.message || "Forbidden"
+      });
+    }
+  };
