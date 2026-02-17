@@ -1,14 +1,8 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { FavoriteType } from "../types/favourite.type";
 
+import mongoose, { Document, Schema } from "mongoose";
+import { FavouriteType } from "../types/favourite.type";
 
-export interface IFavorite extends FavoriteType, Document {
-  _id: mongoose.Types.ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const FavoriteSchema: Schema = new Schema(
+const FavouriteSchema: Schema = new Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
@@ -24,10 +18,10 @@ const FavoriteSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// 🚨 Prevent duplicate favorites
-FavoriteSchema.index({ customer: 1, restaurant: 1 }, { unique: true });
+export interface IFavourite extends FavouriteType, Document {
+  _id: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export const FavoriteModel = mongoose.model<IFavorite>(
-  "Favorite",
-  FavoriteSchema
-);
+export const FavouriteModel = mongoose.model<IFavourite>("Favourite", FavouriteSchema);

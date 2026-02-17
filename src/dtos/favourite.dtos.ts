@@ -1,7 +1,7 @@
 import z from "zod";
 
-export const AddFavoriteDTO = z.object({
-  restaurantId: z.string().min(1)
+export const CreateFavouriteDTO = z.object({
+  restaurantId: z.string()
 });
 
-export type AddFavoriteType = z.infer<typeof AddFavoriteDTO>;
+export type CreateFavouriteDTO = z.infer<typeof CreateFavouriteDTO>;

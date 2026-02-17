@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { FavoriteService } from "../services/favourite.service";
-const favoriteService = new FavoriteService();
+const favouriteService = new FavoriteService();
 
-export class FavoriteController {
+export class FavouriteController {
 
   async add(req: Request, res: Response) {
     try {
       const customerId = req.user?._id;
       const restaurantId  = req.params.restaurantId as string;
 
-      const favorite = await favoriteService.addToFavorite(
+      const favorite = await favouriteService.addToFavorite(
         customerId,
         restaurantId
       );
@@ -33,7 +33,7 @@ export class FavoriteController {
       const customerId = req.user?._id;
       const restaurantId = req.params.restaurantId as string;
 
-      await favoriteService.removeFromFavorite(
+      await favouriteService.removeFromFavorite(
         customerId,
         restaurantId
       );
@@ -55,7 +55,7 @@ export class FavoriteController {
     try {
       const customerId = req.user?._id;
 
-      const favorites = await favoriteService.getMyFavorites(customerId);
+      const favorites = await favouriteService.getMyFavorites(customerId);
 
       return res.status(200).json({
         success: true,

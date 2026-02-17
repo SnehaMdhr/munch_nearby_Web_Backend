@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 import { HttpError } from "../errors/http-error";
-import { FavoriteRepository } from "../repositories/favourite.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
-import { FavoriteModel } from "../model/favourite.model";
+import { FavouriteRepository } from "../repositories/favourite.repository";
+import { FavouriteModel } from "../model/favourite.model";
 
-const favoriteRepository = new FavoriteRepository();
+
+const favouriteRepository = new FavouriteRepository();
 const restaurantRepository = new RestaurantRepository();
 
 export class FavoriteService {
@@ -17,13 +18,13 @@ export class FavoriteService {
       throw new HttpError(404, "Restaurant not found");
     }
 
-    const exists = await favoriteRepository.find(customerId, restaurantId);
+    const exists = await favouriteRepository.find(customerId, restaurantId);
 
     if (exists) {
       throw new HttpError(400, "Restaurant already in favorites");
     }
 
-    const favorite = await FavoriteModel.create({
+    const favourite = await FavouriteModel.create({
       customer: new mongoose.Types.ObjectId(customerId),
       restaurant: new mongoose.Types.ObjectId(restaurantId)
     });
@@ -31,7 +32,7 @@ export class FavoriteService {
 
   async removeFromFavorite(customerId: string, restaurantId: string) {
 
-    const removed = await favoriteRepository.delete(customerId, restaurantId);
+    const removed = await favouriteRepository.delete(customerId, restaurantId);
 
     if (!removed) {
       throw new HttpError(404, "Favorite not found");
@@ -41,6 +42,6 @@ export class FavoriteService {
   }
 
   async getMyFavorites(customerId: string) {
-    return await favoriteRepository.findByCustomer(customerId);
+    return await favouriteRepository.findByCustomer(customerId);
   }
 }

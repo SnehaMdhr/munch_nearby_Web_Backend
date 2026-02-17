@@ -3,17 +3,17 @@ import {
   authorizedMiddleware,
   customerOnlyMiddleware
 } from "../middlewares/authorized.middleware";
-import { FavoriteController } from "../controller/favourite.controller";
+import { FavouriteController } from "../controller/favourite.controller";
 
 const router = Router();
-const favoriteController = new FavoriteController();
+const favouriteController = new FavouriteController();
 
 // Add to favorite
 router.post(
   "/:restaurantId",
   authorizedMiddleware,
   customerOnlyMiddleware,
-  favoriteController.add
+  favouriteController.add
 );
 
 // Remove from favorite
@@ -21,7 +21,7 @@ router.delete(
   "/:restaurantId",
   authorizedMiddleware,
   customerOnlyMiddleware,
-  favoriteController.remove
+  favouriteController.remove
 );
 
 // Get my favorites
@@ -29,7 +29,7 @@ router.get(
   "/my",
   authorizedMiddleware,
   customerOnlyMiddleware,
-  favoriteController.getMyFavorites
+  favouriteController.getMyFavorites
 );
 
 export default router;

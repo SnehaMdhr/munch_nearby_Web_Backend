@@ -1,35 +1,35 @@
-import { FavoriteModel, IFavorite } from "../model/favourite.model";
+import { FavouriteModel, IFavourite } from "../model/favourite.model";
 
 
-export interface IFavoriteRepository {
-  create(data: Partial<IFavorite>): Promise<IFavorite>;
-  find(customerId: string, restaurantId: string): Promise<IFavorite | null>;
-  findByCustomer(customerId: string): Promise<IFavorite[]>;
+export interface IFavouriteRepository {
+  create(data: Partial<IFavourite>): Promise<IFavourite>;
+  find(customerId: string, restaurantId: string): Promise<IFavourite | null>;
+  findByCustomer(customerId: string): Promise<IFavourite[]>;
   delete(customerId: string, restaurantId: string): Promise<boolean>;
 }
 
-export class FavoriteRepository implements IFavoriteRepository {
+export class FavouriteRepository implements IFavouriteRepository {
 
-  async create(data: Partial<IFavorite>): Promise<IFavorite> {
-    const favorite = new FavoriteModel(data);
+  async create(data: Partial<IFavourite>): Promise<IFavourite> {
+    const favorite = new FavouriteModel(data);
     return await favorite.save();
   }
 
   async find(customerId: string, restaurantId: string) {
-    return await FavoriteModel.findOne({
+    return await FavouriteModel.findOne({
       customer: customerId,
       restaurant: restaurantId
     });
   }
 
   async findByCustomer(customerId: string) {
-    return await FavoriteModel.find({
+    return await FavouriteModel.find({
       customer: customerId
     }).populate("restaurant");
   }
 
   async delete(customerId: string, restaurantId: string) {
-    const result = await FavoriteModel.findOneAndDelete({
+    const result = await FavouriteModel.findOneAndDelete({
       customer: customerId,
       restaurant: restaurantId
     });

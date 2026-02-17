@@ -16,7 +16,8 @@ const app: Application = express();
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 let corsOptions = {
-    origin: ["http://localhost:3000", "http://localhost:3005"],
+    origin: ["http://localhost:5050"],
+    credentials: true,
     // which domain can access your backend server
     // add frontend domain in origin 
 }
