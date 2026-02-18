@@ -29,6 +29,13 @@ router.delete(
   reviewController.deleteReview
 );
 
+// ✅ Update review (Customer only)
+router.put(
+  "/update/:id",
+  authorizedMiddleware,
+  customerOnlyMiddleware,
+  reviewController.updateReview
+);
 
 
 

@@ -1,4 +1,4 @@
-;import { CreateReviewDTO } from "../dtos/review.dtos";
+;import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
 import { HttpError } from "../errors/http-error";
 import { ReviewRepository } from "../repositories/review.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
@@ -57,5 +57,32 @@ export class ReviewService {
     await reviewRepository.deleteReview(reviewId);
     return true;
   }
+
+  async updateReview(
+  customerId: string,
+  reviewId: string,
+  data: UpdateReviewDTO
+) {
+  const review = await reviewRepository.getReviewById(reviewId);
+
+  if (!review) {
+    throw new HttpError(404, "Review not found");
+  }
+
+  // Check ownership
+  const ownerId = (review.customer as any)._id || review.customer;
+
+  if (ownerId.toString() !== customerId) {
+    throw new HttpError(403, "Unauthorized to update this review");
+  }
+
+  const updatedReview = await reviewRepository.updateReview(
+    reviewId,
+    data
+  );
+
+  return updatedReview;
+}
+
 
 }

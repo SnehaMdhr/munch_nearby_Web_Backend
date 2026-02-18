@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ReviewService } from "../services/review.service";
-import { CreateReviewDTO } from "../dtos/review.dtos";
+import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
 const reviewService = new ReviewService();
 
 export class ReviewController {
@@ -79,5 +79,48 @@ export class ReviewController {
       });
     }
   }
+
+  // ✅ Update Review
+async updateReview(req: Request<{ id: string }>, res: Response) {
+  try {
+    const customerId = req.user?._id;
+
+    if (!customerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const parsedData = UpdateReviewDTO.safeParse(req.body);
+
+    if (!parsedData.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: parsedData.error.flatten().fieldErrors,
+      });
+    }
+
+    const updatedReview = await reviewService.updateReview(
+      customerId.toString(),
+      req.params.id,
+      parsedData.data
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Review updated successfully",
+      data: updatedReview,
+    });
+
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+}
+
 
 }
