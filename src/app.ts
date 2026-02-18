@@ -9,6 +9,7 @@ import path from "path";
 import restaurantRoute from "./routes/restaurant.routes";
 import menuRoutes from "./routes/menu.routes";
 import favouriteRoutes from "./routes/favourite.routes";
+import reviewRoutes from './routes/review.routes';
 
 dotenv.config();
 console.log(process.env.PORT);
@@ -32,6 +33,7 @@ app.use('/api/admin/users', authUserRoute);
 app.use("/api/restaurant", restaurantRoute);
 app.use("/api/menu", menuRoutes);
 app.use("/api/favourite", favouriteRoutes);
+app.use("/api/review", reviewRoutes);
 
 app.get("/", (req: Request, res: Response)=>{
     res.send("Hello World!");
