@@ -1,57 +1,57 @@
-import { Router } from "express";
-import { MenuController } from "../controller/menu.controller";
-import { authorizedMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
+  import { Router } from "express";
+  import { MenuController } from "../controller/menu.controller";
+  import { authorizedMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
 
-const router = Router();
-const menuController = new MenuController();
-
-
-// ✅ Get all menus (Public)
-router.get(
-  "/",
-  menuController.getAllMenus
-);
+  const router = Router();
+  const menuController = new MenuController();
 
 
-// ✅ Create menu (Owner only)
-router.post(
-  "/create",
-  authorizedMiddleware,
-  restaurantOwnerOnlyMiddleware,
-  menuController.createMenu
-);
+  // ✅ Get all menus (Public)
+  router.get(
+    "/",
+    menuController.getAllMenus
+  );
 
 
-// ✅ Get menus by restaurant (Public)
-router.get(
-  "/restaurant/:restaurantId",
-  menuController.getMenusByRestaurant
-);
+  // ✅ Create menu (Owner only)
+  router.post(
+    "/create",
+    authorizedMiddleware,
+    restaurantOwnerOnlyMiddleware,
+    menuController.createMenu
+  );
 
 
-// ✅ Get menu by ID (Public)
-router.get(
-  "/:id",
-  menuController.getMenuById
-);
+  // ✅ Get menus by restaurant (Public)
+  router.get(
+    "/restaurant/:restaurantId",
+    menuController.getMenusByRestaurant
+  );
 
 
-// ✅ Update menu (Owner only)
-router.put(
-  "/update/:id",
-  authorizedMiddleware,
-  restaurantOwnerOnlyMiddleware,
-  menuController.updateMenu
-);
+  // ✅ Get menu by ID (Public)
+  router.get(
+    "/:id",
+    menuController.getMenuById
+  );
 
 
-// ✅ Delete menu (Owner only)
-router.delete(
-  "/delete/:id",
-  authorizedMiddleware,
-  restaurantOwnerOnlyMiddleware,
-  menuController.deleteMenu
-);
+  // ✅ Update menu (Owner only)
+  router.put(
+    "/update/:id",
+    authorizedMiddleware,
+    restaurantOwnerOnlyMiddleware,
+    menuController.updateMenu
+  );
 
 
-export default router;
+  // ✅ Delete menu (Owner only)
+  router.delete(
+    "/delete/:id",
+    authorizedMiddleware,
+    restaurantOwnerOnlyMiddleware,
+    menuController.deleteMenu
+  );
+
+
+  export default router;
