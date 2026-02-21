@@ -122,5 +122,33 @@ async updateReview(req: Request<{ id: string }>, res: Response) {
   }
 }
 
+ async getReviewsForOwner(req: Request, res: Response) {
+    try {
+      const ownerId = req.user?._id;
+
+      if (!ownerId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const reviews = await reviewService.getReviewsForOwner(
+        ownerId.toString()
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: reviews,
+      });
+
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
+  }
+
 
 }

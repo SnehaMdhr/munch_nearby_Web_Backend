@@ -84,5 +84,21 @@ export class ReviewService {
   return updatedReview;
 }
 
+// ✅ OWNER: Get Reviews of His Restaurants
+async getReviewsForOwner(ownerId: string) {
+
+  if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+    throw new HttpError(400, "Invalid owner id");
+  }
+
+  const reviews = await reviewRepository.getReviewsForOwner(ownerId);
+
+  if (!reviews || reviews.length === 0) {
+    return [];
+  }
+
+  return reviews;
+}
+
 
 }

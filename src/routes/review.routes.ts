@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ReviewController } from "../controller/review.controller";
-import { authorizedMiddleware, customerOnlyMiddleware } from "../middlewares/authorized.middleware";
+import { authorizedMiddleware, customerOnlyMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
 
 const router = Router();
 const reviewController = new ReviewController();
@@ -37,6 +37,12 @@ router.put(
   reviewController.updateReview
 );
 
+router.get(
+  "/owner/my-reviews",
+  authorizedMiddleware,
+  restaurantOwnerOnlyMiddleware, 
+  reviewController.getReviewsForOwner
+);
 
 
 export default router;

@@ -21,6 +21,8 @@ export interface IReviewRepository {
   ): Promise<IReview | null>;
 
   deleteReview(id: string): Promise<boolean>;
+
+  getReviewsForOwner(ownerId: string): Promise<IReview[]>;
 }
 
 export class ReviewRepository implements IReviewRepository {
@@ -88,5 +90,19 @@ export class ReviewRepository implements IReviewRepository {
   async deleteReview(id: string): Promise<boolean> {
     const result = await ReviewModel.findByIdAndDelete(id);
     return result ? true : false;
+  }
+
+  async getReviewsForOwner(ownerId: string) {
+    const reviews = await ReviewModel.find()
+      .populate({
+        path: "restaurant",
+        match: { owner: ownerId },
+        select: "name category"
+      })
+      .populate("customer", "name email")
+      .sort({ createdAt: -1 });
+
+    // Remove null restaurant results
+    return reviews.filter(r => r.restaurant);
   }
 }
