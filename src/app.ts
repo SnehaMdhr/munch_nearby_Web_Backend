@@ -16,6 +16,7 @@ console.log(process.env.PORT);
 const app: Application = express();
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 let corsOptions = {
     origin: ["http://localhost:5050"],
     credentials: true,
