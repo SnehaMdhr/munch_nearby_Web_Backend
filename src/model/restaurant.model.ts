@@ -10,6 +10,17 @@ const RestaurantSchema: Schema = new Schema(
     category: {type: String},
     description: {type: String},
     imageUrl: {type: String, required: false },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+      }
+    },
+    
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // MUST match your User model name

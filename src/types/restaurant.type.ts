@@ -10,6 +10,14 @@ export const restaurantSchema = z.object({
   description: z.string().optional(),
   imageUrl: z.string().optional(),
 
+  location: z
+    .object({
+      type: z.literal("Point"),
+      coordinates: z.tuple([z.number(), z.number()]) // [longitude, latitude]
+    })
+    .optional(),
+
+
   // Reference to User
   owner: z.instanceof(mongoose.Types.ObjectId)
 });
