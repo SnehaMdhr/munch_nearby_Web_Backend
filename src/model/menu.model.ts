@@ -28,6 +28,11 @@ const MenuSchema: Schema = new Schema(
       default: true
     },
 
+    imageUrl: {
+      type: String, 
+      required: false 
+    },
+
     restaurant: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Restaurant", // MUST match your User model name

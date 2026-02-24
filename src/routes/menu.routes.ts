@@ -1,6 +1,7 @@
   import { Router } from "express";
   import { MenuController } from "../controller/menu.controller";
   import { authorizedMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
+import { uploads } from "../middlewares/upload.middleware";
 
   const router = Router();
   const menuController = new MenuController();
@@ -18,6 +19,7 @@
     "/create",
     authorizedMiddleware,
     restaurantOwnerOnlyMiddleware,
+    uploads.single("imageUrl"),
     menuController.createMenu
   );
 
@@ -41,6 +43,7 @@
     "/update/:id",
     authorizedMiddleware,
     restaurantOwnerOnlyMiddleware,
+    uploads.single("imageUrl"),
     menuController.updateMenu
   );
 
