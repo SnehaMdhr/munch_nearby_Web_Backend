@@ -1,7 +1,9 @@
 import { UserRepository } from "../../repositories/user.repository";
 import bcryptjs from "bcryptjs"
-import { CreateUserDto, UpdateUserDTO } from "../../dtos/user.dtos";
+import { CreateUserDto, AdminUpdateUserDTO } from "../../dtos/user.dtos";
 import { HttpError } from "../../errors/http-error";
+import fs from "fs";
+import path from "path";
 let userRepository = new UserRepository();
 export class AdminUserService {
     async createUser(data: CreateUserDto){
@@ -43,14 +45,43 @@ export class AdminUserService {
         return user;
     }
     async deleteUser(id: string) {
+        const user = await userRepository.getUsersById(id);
+        
+        // 🔥 Delete user image if exists
+        if(user && user.imageUrl){
+            try {
+                const imagePath = path.join(__dirname, '../../../', user.imageUrl);
+                
+                if(fs.existsSync(imagePath)){
+                    fs.unlinkSync(imagePath);
+                }
+            } catch (error) {
+                console.error("Error deleting user image:", error);
+            }
+        }
+        
         const isDeleted = await userRepository.deleteUser(id);
         return isDeleted;
     }
-    async updateUser(id: string, updateData: UpdateUserDTO){
+    async updateUser(id: string, updateData: AdminUpdateUserDTO){
         const user = await userRepository.getUsersById(id);
         if(!user){
             throw new HttpError(404, "User not found");
         }
+        
+        // 🔥 Handle old image deletion if new image is being uploaded
+        if(updateData.imageUrl && user.imageUrl && user.imageUrl !== updateData.imageUrl){
+            try {
+                const oldImagePath = path.join(__dirname, '../../../', user.imageUrl);
+                
+                if(fs.existsSync(oldImagePath)){
+                    fs.unlinkSync(oldImagePath);
+                }
+            } catch (error) {
+                console.error("Error deleting old user image:", error);
+            }
+        }
+        
         const updatedUser = await userRepository.updateUser(id, updateData);
         return updatedUser;
     }

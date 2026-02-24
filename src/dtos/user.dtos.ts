@@ -28,5 +28,9 @@ export const LoginUserDTO = z.object({
 });
 export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
 
-export const UpdateUserDTO = userSchema.partial();
+export const UpdateUserDTO = userSchema.omit({ role: true }).partial();
 export type UpdateUserDTO = z.infer<typeof UpdateUserDTO>;
+
+// Admin can update role field
+export const AdminUpdateUserDTO = userSchema.partial();
+export type AdminUpdateUserDTO = z.infer<typeof AdminUpdateUserDTO>;

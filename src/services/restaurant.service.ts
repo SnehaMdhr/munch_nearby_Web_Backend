@@ -4,6 +4,11 @@ import { RestaurantRepository } from "../repositories/restaurant.repositiry";
 import { CreateRestaurantDTO, UpdateRestaurantDTO } from "../dtos/restaurant.dtos";
 import { extractLatLng } from "../utils/extractLatLng";
 import { geocodeAddress } from "../utils/geocode";
+import { ReviewModel } from "../model/review.model";
+import { MenuModel } from "../model/menu.model";
+import { FavouriteModel } from "../model/favourite.model";
+import fs from "fs";
+import path from "path";
 
 const restaurantRepository = new RestaurantRepository();
 
@@ -123,6 +128,19 @@ export class RestaurantService {
 
   let updatedData: any = { ...data };
 
+  // 🔥 Handle old image deletion if new image is being uploaded
+  if(data.imageUrl && restaurant.imageUrl && restaurant.imageUrl !== data.imageUrl){
+    try {
+      const oldImagePath = path.join(__dirname, '../../', restaurant.imageUrl);
+      
+      if(fs.existsSync(oldImagePath)){
+        fs.unlinkSync(oldImagePath);
+      }
+    } catch (error) {
+      console.error("Error deleting old restaurant image:", error);
+    }
+  }
+
   if (data.mapLink) {
     const coords = extractLatLng(data.mapLink);
 
@@ -141,7 +159,7 @@ export class RestaurantService {
     updatedData
   );
 }
-  // ✅ Delete Restaurant (Owner Only)
+  // ✅ Delete Restaurant (Owner Only) - Cascade delete all related data
   async deleteRestaurant(ownerId: string) {
 
     const restaurant = await restaurantRepository.getRestaurantByOwner(ownerId);
@@ -150,9 +168,30 @@ export class RestaurantService {
       throw new HttpError(404, "Restaurant not found");
     }
 
-    const deleted = await restaurantRepository.deleteRestaurant(
-      restaurant._id.toString()
-    );
+    const restaurantId = restaurant._id.toString();
+
+    // 🔥 Delete restaurant image if exists
+    if(restaurant.imageUrl){
+      try {
+        const imagePath = path.join(__dirname, '../../', restaurant.imageUrl);
+        
+        if(fs.existsSync(imagePath)){
+          fs.unlinkSync(imagePath);
+        }
+      } catch (error) {
+        console.error("Error deleting restaurant image:", error);
+      }
+    }
+
+    // 🔥 Delete all related data in parallel
+    await Promise.all([
+      ReviewModel.deleteMany({ restaurant: restaurantId }),
+      MenuModel.deleteMany({ restaurant: restaurantId }),
+      FavouriteModel.deleteMany({ restaurant: restaurantId })
+    ]);
+
+    // 🔥 Finally, delete the restaurant itself
+    const deleted = await restaurantRepository.deleteRestaurant(restaurantId);
 
     return deleted;
   }

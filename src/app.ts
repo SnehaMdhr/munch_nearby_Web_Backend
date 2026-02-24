@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import restaurantRoute from "./routes/restaurant.routes";
 import menuRoutes from "./routes/menu.routes";
 import favouriteRoutes from "./routes/favourite.routes";
@@ -15,7 +16,10 @@ dotenv.config();
 console.log(process.env.PORT);
 const app: Application = express();
 
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+const uploadsPath = path.resolve(process.cwd(), "uploads");
+fs.mkdirSync(uploadsPath, { recursive: true });
+
+app.use("/uploads", express.static(uploadsPath));
 // app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 let corsOptions = {
     origin: ["http://localhost:5050"],
