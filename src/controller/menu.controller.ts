@@ -28,6 +28,10 @@ export class MenuController {
         });
       }
 
+      if (req.file) {
+        parsedData.data.imageUrl = `/uploads/${req.file.filename}`;
+      }
+
       const menu = await menuService.createMenu(
         ownerId,
         parsedData.data
@@ -142,6 +146,10 @@ export class MenuController {
           success: false,
           message: z.prettifyError(parsedData.error)
         });
+      }
+
+      if (req.file) {
+        parsedData.data.imageUrl = `/uploads/${req.file.filename}`;
       }
 
       const updatedMenu = await menuService.updateMenu(
