@@ -1,4 +1,4 @@
-;import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
+import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
 import { HttpError } from "../errors/http-error";
 import { ReviewRepository } from "../repositories/review.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
@@ -9,6 +9,29 @@ const reviewRepository = new ReviewRepository();
 const restaurantRepository = new RestaurantRepository();
 
 export class ReviewService {
+  private async refreshRestaurantReviewStats(restaurantId: string) {
+    const objectId = new mongoose.Types.ObjectId(restaurantId);
+
+    const stats = await ReviewModel.aggregate([
+      { $match: { restaurant: objectId } },
+      {
+        $group: {
+          _id: "$restaurant",
+          totalReviews: { $sum: 1 },
+          averageReviews: { $avg: "$rating" }
+        }
+      }
+    ]);
+
+    const totalReviews = stats[0]?.totalReviews ?? 0;
+    const averageReviews = stats[0]?.averageReviews ?? 0;
+
+    await restaurantRepository.updateRestaurant(restaurantId, {
+      totalReviews,
+      averageReviews: Number(averageReviews.toFixed(2))
+    } as any);
+  }
+
   async createReview(customerId: string, data: CreateReviewDTO) {
     // 1. Check if restaurant exists
     const restaurant = await restaurantRepository.getRestaurantById(data.restaurantId);
@@ -34,6 +57,8 @@ export class ReviewService {
       comment: data.comment,
     });
 
+    await this.refreshRestaurantReviewStats(data.restaurantId);
+
     return review;
   }
 
@@ -48,6 +73,8 @@ export class ReviewService {
     const review = await reviewRepository.getReviewById(reviewId);
     if (!review) throw new HttpError(404, "Review not found");
 
+    const restaurantId = ((review.restaurant as any)?._id || review.restaurant).toString();
+
     // Check ownership
     const ownerId = (review.customer as any)._id || review.customer;
     if (ownerId.toString() !== customerId) {
@@ -55,6 +82,7 @@ export class ReviewService {
     }
 
     await reviewRepository.deleteReview(reviewId);
+    await this.refreshRestaurantReviewStats(restaurantId);
     return true;
   }
 
@@ -80,6 +108,9 @@ export class ReviewService {
     reviewId,
     data
   );
+
+  const restaurantId = ((review.restaurant as any)?._id || review.restaurant).toString();
+  await this.refreshRestaurantReviewStats(restaurantId);
 
   return updatedReview;
 }

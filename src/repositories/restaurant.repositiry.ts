@@ -45,12 +45,14 @@ export class RestaurantRepository implements IRestaurantRepository {
       .populate("owner", "name email role");
   }
 
-  async getRestaurantByOwner(
-    ownerId: string
-  ): Promise<IRestaurant | null> {
-    return await RestaurantModel.findOne({ owner: ownerId });
-  }
-
+async getRestaurantByOwner(
+  ownerId: string
+): Promise<IRestaurant | null> {
+  return await RestaurantModel.findOne({ owner: ownerId })
+    .populate("menus")   // Matches the field name in your Restaurant schema
+    .populate("reviews")
+    .exec();
+}
   async getAllRestaurants(): Promise<IRestaurant[]> {
     return await RestaurantModel.find()
       .populate("owner", "name email");
@@ -77,7 +79,7 @@ export class RestaurantRepository implements IRestaurantRepository {
     const restaurants = await RestaurantModel.find(query)
       .skip((page - 1) * size)
       .limit(size)
-      .select("name category address contactNumber createdAt")
+      .select("name category address contactNumber totalReviews averageReviews createdAt")
       .sort({ createdAt: -1 });
 
     return { restaurants, total };

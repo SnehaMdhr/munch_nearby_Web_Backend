@@ -4,7 +4,11 @@ import { restaurantSchema } from "../types/restaurant.type";
 
 // Create Restaurant DTO (Profile Section)
 export const CreateRestaurantDTO = restaurantSchema.omit({
-  owner: true
+  owner: true,
+  totalReviews: true,
+  averageReviews: true,
+  menus: true,
+  reviews: true
 });
 
 export type CreateRestaurantDTO = z.infer<typeof CreateRestaurantDTO>;
@@ -13,7 +17,11 @@ export type CreateRestaurantDTO = z.infer<typeof CreateRestaurantDTO>;
 // Update Restaurant DTO
 export const UpdateRestaurantDTO = restaurantSchema
   .omit({
-    owner: true
+    owner: true,
+    totalReviews: true,
+    averageReviews: true,
+    menus: true,
+    reviews: true
   })
   .partial();
 
