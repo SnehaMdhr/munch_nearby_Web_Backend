@@ -2,6 +2,8 @@ import { CreateMenuDTO, UpdateMenuDTO } from "../dtos/menu.dtos";
 import { HttpError } from "../errors/http-error";
 import { MenuRepository } from "../repositories/menu.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
+import fs from "fs";
+import path from "path";
 
 
 const menuRepository = new MenuRepository();
@@ -81,6 +83,19 @@ export class MenuService {
       throw new HttpError(403, "Unauthorized to update this menu");
     }
 
+    if (data.imageUrl && menu.imageUrl && menu.imageUrl !== data.imageUrl) {
+      try {
+        const oldImageFilename = path.basename(menu.imageUrl);
+        const oldImagePath = path.resolve(__dirname, "../../uploads", oldImageFilename);
+
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      } catch (error) {
+        console.error("Error deleting old menu image:", error);
+      }
+    }
+
     const updatedMenu = await menuRepository.updateMenu(menuId, data);
 
     return updatedMenu;
@@ -100,6 +115,19 @@ export class MenuService {
 
     if (!restaurant || !menu.restaurant.equals(restaurant._id)) {
       throw new HttpError(403, "Unauthorized to delete this menu");
+    }
+
+    if (menu.imageUrl) {
+      try {
+        const imageFilename = path.basename(menu.imageUrl);
+        const imagePath = path.resolve(__dirname, "../../uploads", imageFilename);
+
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } catch (error) {
+        console.error("Error deleting menu image:", error);
+      }
     }
 
     await menuRepository.deleteMenu(menuId);
