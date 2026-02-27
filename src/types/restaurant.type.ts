@@ -1,6 +1,13 @@
 import z from "zod";
 import mongoose from "mongoose";
 
+export enum RestaurantStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  SUSPENDED = "SUSPENDED"
+}
+
 export const restaurantSchema = z.object({
   name: z.string().min(2),
   address: z.string().min(5),
@@ -37,7 +44,10 @@ export const restaurantSchema = z.object({
 
 
   // Reference to User
-  owner: z.instanceof(mongoose.Types.ObjectId)
+  owner: z.instanceof(mongoose.Types.ObjectId),
+
+  status: z.nativeEnum(RestaurantStatus).default(RestaurantStatus.PENDING),
+  isDeleted: z.boolean().default(false),
 });
 
 export type RestaurantType = z.infer<typeof restaurantSchema>;

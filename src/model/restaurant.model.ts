@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { RestaurantType } from "../types/restaurant.type";
+import { RestaurantStatus, RestaurantType } from "../types/restaurant.type";
+
 
 const OpeningHoursSchema = new Schema(
   {
@@ -27,7 +28,6 @@ const RestaurantSchema: Schema = new Schema(
       default: [],
     },
 
-    /* ⭐ REVIEW FIELDS */
     totalReviews: {
       type: Number,
       default: 0,
@@ -62,15 +62,26 @@ const RestaurantSchema: Schema = new Schema(
         enum: ["Point"],
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
       }
     },
     
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // MUST match your User model name
+      ref: "User", 
       required: true,
-      unique: true // ensures one restaurant per owner
+      unique: true 
+    },
+
+    status: {
+      type: String,
+      enum: Object.values(RestaurantStatus),
+      default: RestaurantStatus.PENDING
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }

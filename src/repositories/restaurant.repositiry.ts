@@ -1,6 +1,7 @@
 import { QueryFilter } from "mongoose";
 import mongoose from "mongoose";
 import { IRestaurant, RestaurantModel } from "../model/restaurant.model";
+import { RestaurantStatus } from "../types/restaurant.type";
 
 export interface IRestaurantRepository {
   createRestaurant(data: Partial<IRestaurant>): Promise<IRestaurant>;
@@ -23,10 +24,30 @@ export interface IRestaurantRepository {
   ): Promise<IRestaurant | null>;
 
   deleteRestaurant(id: string): Promise<boolean>;
+
+  updateStatus(id: string,status: RestaurantStatus): Promise<IRestaurant | null>;
+
+  softDeleteByAdmin(id: string): Promise<boolean>;
+  
 }
 
 export class RestaurantRepository implements IRestaurantRepository {
-
+  async updateStatus(id: string, status: RestaurantStatus): Promise<IRestaurant | null> {
+    return await RestaurantModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+  }
+  async softDeleteByAdmin(id: string): Promise<boolean> {
+    const result = await RestaurantModel.findByIdAndUpdate(
+      id,
+      { isDeleted: true },
+      { new: true }
+    );
+    return result ? true: false;
+  }
+  
   async createRestaurant(
     data: Partial<IRestaurant>
   ): Promise<IRestaurant> {
@@ -41,20 +62,24 @@ export class RestaurantRepository implements IRestaurantRepository {
       return null;
     }
 
-    return await RestaurantModel.findById(id)
+    return await RestaurantModel.findOne({ _id: id, isDeleted: false })
       .populate("owner", "name email role");
   }
 
 async getRestaurantByOwner(
   ownerId: string
 ): Promise<IRestaurant | null> {
-  return await RestaurantModel.findOne({ owner: ownerId })
+  return await RestaurantModel.findOne({ owner: ownerId, isDeleted: false })
+    .populate("owner", "name")
     .populate("menus")   // Matches the field name in your Restaurant schema
     .populate("reviews")
     .exec();
 }
   async getAllRestaurants(): Promise<IRestaurant[]> {
-    return await RestaurantModel.find()
+    return await RestaurantModel.find({
+      isDeleted: false,
+      status: RestaurantStatus.APPROVED
+    })
       .populate("owner", "name email");
   }
 
@@ -64,7 +89,7 @@ async getRestaurantByOwner(
     search?: string
   ): Promise<{ restaurants: IRestaurant[]; total: number }> {
 
-    const query: QueryFilter<IRestaurant> = {};
+    const query: QueryFilter<IRestaurant> = { isDeleted: false };
 
     if (search) {
       query.$or = [
@@ -79,7 +104,8 @@ async getRestaurantByOwner(
     const restaurants = await RestaurantModel.find(query)
       .skip((page - 1) * size)
       .limit(size)
-      .select("name category address contactNumber totalReviews averageReviews createdAt")
+      .select("name category address contactNumber totalReviews averageReviews createdAt owner")
+      .populate("owner", "name", "imageUrl")
       .sort({ createdAt: -1 });
 
     return { restaurants, total };

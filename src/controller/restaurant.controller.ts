@@ -5,6 +5,16 @@ import { CreateRestaurantDTO, UpdateRestaurantDTO } from "../dtos/restaurant.dto
 
 const restaurantService = new RestaurantService();
 
+const parseOpeningHoursFromFormData = (body: any) => {
+  if (typeof body?.openingHours === "string") {
+    try {
+      body.openingHours = JSON.parse(body.openingHours);
+    } catch {
+      throw new Error("Invalid openingHours JSON format");
+    }
+  }
+};
+
 export class RestaurantController {
 
   // ✅ Create Restaurant (Owner Only)
@@ -16,6 +26,15 @@ export class RestaurantController {
         return res.status(400).json({
           success: false,
           message: "User ID not provided"
+        });
+      }
+
+      try {
+        parseOpeningHoursFromFormData(req.body);
+      } catch (error: any) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
         });
       }
 
@@ -52,8 +71,6 @@ export class RestaurantController {
     }
   }
 
-
-  // ✅ Get My Restaurant (Owner Dashboard)
   async getMyRestaurant(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;
@@ -81,8 +98,6 @@ export class RestaurantController {
     }
   }
 
-
-  // ✅ Get Restaurant By ID (Public)
  async getRestaurantById(
     req: Request<{ id: string }>,
     res: Response
@@ -107,8 +122,6 @@ export class RestaurantController {
     }
 
 
-
-  // ✅ Get All Restaurants (Public Homepage)
   async getAllRestaurants(req: Request, res: Response) {
     try {
       const restaurants = await restaurantService.getAllRestaurants();
@@ -127,8 +140,6 @@ export class RestaurantController {
     }
   }
 
-
-  // ✅ Update Restaurant (Owner Only)
   async updateRestaurant(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;
@@ -137,6 +148,15 @@ export class RestaurantController {
         return res.status(400).json({
           success: false,
           message: "User ID not provided"
+        });
+      }
+
+      try {
+        parseOpeningHoursFromFormData(req.body);
+      } catch (error: any) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
         });
       }
 
@@ -172,8 +192,6 @@ export class RestaurantController {
     }
   }
 
-
-  // ✅ Delete Restaurant (Owner Only)
   async deleteRestaurant(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;
@@ -199,4 +217,106 @@ export class RestaurantController {
       });
     }
   }
+
+
+async approveRestaurant(req: Request, res: Response) {
+  try {
+    const  id  = req.params.id as string;
+
+    const restaurant =
+      await restaurantService.approveRestaurant(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant approved successfully",
+      data: restaurant
+    });
+
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+async rejectRestaurant(req: Request, res: Response) {
+  try {
+    const  id  = req.params.id as string;
+
+    const restaurant =
+      await restaurantService.rejectRestaurant(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant rejected successfully",
+      data: restaurant
+    });
+
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+async suspendRestaurant(req: Request, res: Response) {
+  try {
+    const id  = req.params.id as string;
+
+    const restaurant =
+      await restaurantService.suspendRestaurant(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant suspended successfully",
+      data: restaurant
+    });
+
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+async deleteRestaurantByAdmin(req: Request, res: Response) {
+  try {
+    const id = req.params.id as string;
+
+    await restaurantService.deleteRestaurantByAdmin(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant deleted successfully"
+    });
+
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+async getAllRestaurantsForAdmin(req: Request, res: Response) {
+  try {
+
+    const restaurants =
+      await restaurantService.getAllRestaurantsForAdmin();
+
+    return res.status(200).json({
+      success: true,
+      data: restaurants
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
+  }
+}
 }
