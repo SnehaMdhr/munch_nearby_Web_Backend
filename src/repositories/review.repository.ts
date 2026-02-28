@@ -38,7 +38,7 @@ export class ReviewRepository implements IReviewRepository {
     id: string
   ): Promise<IReview | null> {
     return await ReviewModel.findById(id)
-      .populate("customer", "name email")
+      .populate("customer", "name email imageUrl")
       .populate("restaurant", "name category");
   }
 
@@ -46,7 +46,7 @@ export class ReviewRepository implements IReviewRepository {
     restaurantId: string
   ): Promise<IReview[]> {
     return await ReviewModel.find({ restaurant: restaurantId })
-      .populate("customer", "name")
+      .populate("customer", "name email imageUrl")
       .sort({ createdAt: -1 });
   }
 
@@ -99,7 +99,7 @@ export class ReviewRepository implements IReviewRepository {
         match: { owner: ownerId },
         select: "name category"
       })
-      .populate("customer", "name email")
+      .populate("customer", "name email imageUrl")
       .sort({ createdAt: -1 });
 
     // Remove null restaurant results

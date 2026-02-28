@@ -40,7 +40,7 @@ export class UserRepository implements IUserRepository {
     const users = await UserModel.find(query)
         .skip((page - 1) * size)
         .limit(size)
-        .select('name email role createdAt') // send only what admin needs
+        .select('name email role createdAt imageUrl') 
         .sort({ createdAt: -1 });
 
         return { users, total };
