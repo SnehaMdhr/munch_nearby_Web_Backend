@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { RestaurantStatus } from "../types/restaurant.type";
 import { RestaurantModel } from "../model/restaurant.model";
+import { sendEmail } from "../config/email";
 
 const restaurantRepository = new RestaurantRepository();
 
@@ -190,52 +191,100 @@ export class RestaurantService {
 
     return true;
   }
-
 async approveRestaurant(restaurantId: string) {
-
-  const restaurant =
-    await restaurantRepository.updateStatus(
-      restaurantId,
-      RestaurantStatus.APPROVED
-    );
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.APPROVED },
+    { new: true }
+  ).populate("owner", "name email");
 
   if (!restaurant) {
     throw new HttpError(404, "Restaurant not found");
+  }
+
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "🎉 Restaurant Approved",
+      `
+        <h2>Congratulations ${owner.name}!</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> has been approved.</p>
+        <p>You can now start accepting orders.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Approval email failed:", err.message);
+    });
   }
 
   return restaurant;
 }
 
 async rejectRestaurant(restaurantId: string) {
-
-  const restaurant =
-    await restaurantRepository.updateStatus(
-      restaurantId,
-      RestaurantStatus.REJECTED
-    );
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.REJECTED },
+    { new: true }
+  ).populate("owner", "name email");
 
   if (!restaurant) {
     throw new HttpError(404, "Restaurant not found");
   }
 
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "❌ Restaurant Application Rejected",
+      `
+        <h2>Hello ${owner.name},</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> was rejected.</p>
+        <p>Please review and resubmit your application.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Rejection email failed:", err.message);
+    });
+  }
+
   return restaurant;
 }
-
 async suspendRestaurant(restaurantId: string) {
-
-  const restaurant =
-    await restaurantRepository.updateStatus(
-      restaurantId,
-      RestaurantStatus.SUSPENDED
-    );
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.SUSPENDED },
+    { new: true }
+  ).populate("owner", "name email");
 
   if (!restaurant) {
     throw new HttpError(404, "Restaurant not found");
   }
 
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "⚠️ Restaurant Suspended",
+      `
+        <h2>Hello ${owner.name},</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> has been suspended.</p>
+        <p>Please contact support for more details.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Suspension email failed:", err.message);
+    });
+  }
+
   return restaurant;
 }
-
 async deleteRestaurantByAdmin(restaurantId: string) {
   await this.cascadeDeleteRestaurant(restaurantId);
 
