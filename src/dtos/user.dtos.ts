@@ -10,6 +10,7 @@ export const CreateUserDto = userSchema.pick(
     }
 ).extend(
     {
+        password: z.string().min(8),
         confirmPassword: z.string().min(6)
     }
 ).refine(
@@ -34,3 +35,9 @@ export type UpdateUserDTO = z.infer<typeof UpdateUserDTO>;
 // Admin can update role field
 export const AdminUpdateUserDTO = userSchema.partial();
 export type AdminUpdateUserDTO = z.infer<typeof AdminUpdateUserDTO>;
+
+export const GoogleLoginDTO = z.object({
+    token: z.string().min(10)
+});
+
+export type GoogleLoginDTO = z.infer<typeof GoogleLoginDTO>;

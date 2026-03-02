@@ -7,8 +7,11 @@ import { JWT_SECRET } from "../config";
 import { sendEmail } from "../config/email";
 import fs from "fs";
 import path from "path";
+import { OAuth2Client } from "google-auth-library";
 
 const CLIENT_URL = process.env.CLIENT_URL as string;
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 let userRepository = new UserRepository;
 
@@ -32,6 +35,9 @@ export class UserService {
         const user = await userRepository.getUserByEmail(data.email);
         if(!user){
             throw new HttpError(404, "User not found");
+        }
+        if (!user.password) {
+            throw new HttpError(401, "This account uses social login. Please continue with Google.");
         }
         //compare password 
         const validPassword = await bcryptjs.compare(data.password, user.password);
@@ -69,24 +75,19 @@ export class UserService {
             }
         }
         
-        // 🔥 Handle old image deletion if new image is being uploaded
         if(data.imageUrl && user.imageUrl && user.imageUrl !== data.imageUrl){
             try {
-                // Extract filename from the old imageUrl path (e.g., "/uploads/filename.png")
                 const oldImagePath = path.join(__dirname, '../../', user.imageUrl);
-                
-                // Check if file exists before attempting to delete
+    
                 if(fs.existsSync(oldImagePath)){
                     fs.unlinkSync(oldImagePath);
                 }
             } catch (error) {
-                // Log error but don't fail the update if old image deletion fails
                 console.error("Error deleting old image:", error);
             }
         }
         
         if(data.password){
-            //hash new password
             const hashedPassword = await bcryptjs.hash(data.password,10);
             data.password = hashedPassword;
         }
@@ -131,6 +132,44 @@ export class UserService {
             throw new HttpError(400, "Invalid or expired token");
         }
     }
+
+    async googleLogin(token: string) {
+    const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload?.email) {
+        throw new HttpError(400, "Invalid Google token");
+    }
+
+    const { email, name, picture } = payload;
+
+    let user = await userRepository.getUserByEmail(email);
+
+    if (!user) {
+        user = await userRepository.createUser({
+            email,
+            name,
+            authProvider: "google",
+            role: "Customer",
+            imageUrl: picture,
+        });
+    }
+
+    const payloadJwt = {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+    };
+
+    const jwtToken = jwt.sign(payloadJwt, JWT_SECRET, { expiresIn: "30d" });
+
+    return { token: jwtToken, user };
+}
 
 }
 

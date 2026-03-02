@@ -4,7 +4,14 @@ import { UserType } from "../types/user.type";
 const UserSchema: Schema = new Schema<UserType>(
     {
         email: { type: String, required: true, unique: true, minlength: 5 },
-        password: { type: String, required: true, minlength: 8 },
+        password: {
+            type: String,
+            required: function (this: { authProvider?: string }): boolean {
+                return this.authProvider === "local";
+            },
+            minlength: 8,
+        },
+        authProvider: { type: String, enum: ["local", "google", "github"], default: "local" },
         name: { type: String },
         role: { type: String, enum: ["Customer","Restaurant Owner", "admin"], default: "Customer" },
         imageUrl: { type: String, required: false },

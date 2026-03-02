@@ -16,4 +16,6 @@ router.post(
 )
 router.post("/reset-password/:token", authController.resetPassword);
 
+router.post("/google-login", authController.googleLogin);
+
 export default router;
