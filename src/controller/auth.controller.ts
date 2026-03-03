@@ -1,9 +1,7 @@
 import { UserService } from "../services/user.service";
-import { CreateUserDto, LoginUserDTO, UpdateUserDTO } from "../dtos/user.dtos";
+import { CreateUserDto, LoginUserDTO, ResetPasswordDTO, UpdateUserDTO } from "../dtos/user.dtos";
 import { Request, Response } from "express";
-import z, { success } from "zod";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../config";
+import z from "zod";
 import { GoogleLoginDTO } from "../dtos/user.dtos";
 
 let userService = new UserService();
@@ -97,45 +95,6 @@ export class AuthController{
             );
         }
     }
-    async requestPasswordReset(req: Request, res: Response) {
-        try {
-            const email = req.body.email;
-            if (!email) {
-                return res.status(400).json(
-                    { success: false, message: "Email is required" }
-                );
-            }
-            const user = await userService.sendResetPasswordEmail(email);
-            return res.status(200).json(
-                {
-                    success: true,
-                    data: user,
-                    message: "Password reset email sent"
-                }
-            );
-        } catch (error: Error | any) {
-            return res.status(error.statusCode ?? 500).json(
-                { success: false, message: error.message || "Internal Server Error" }
-            );
-        }
-    }
-
-    async resetPassword(req: Request, res: Response) {
-        try {
-
-           const token = req.params.token as string;
-            const { newPassword } = req.body;
-            await userService.resetPassword(token, newPassword);
-            return res.status(200).json(
-                { success: true, message: "Password has been reset successfully." }
-            );
-        } catch (error: Error | any) {
-            return res.status(error.statusCode ?? 500).json(
-                { success: false, message: error.message || "Internal Server Error" }
-            );
-        }
-    }
-
     async googleLogin(req: Request, res: Response) {
     try {
         const parsedData = GoogleLoginDTO.safeParse(req.body);
@@ -162,6 +121,60 @@ export class AuthController{
         return res.status(error.statusCode ?? 500).json({
             success: false,
             message: error.message || "Internal Server Error",
+        });
+    }
+}
+
+async requestPasswordResetOTP(req: Request, res: Response) {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+
+        await userService.sendResetPasswordEmailOTP(email);
+
+        return res.status(200).json({
+            success: true,
+            message: "OTP sent successfully"
+        });
+
+    } catch (error: Error | any) {
+        return res.status(error.statusCode ?? 500).json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
+async resetPasswordOTP(req: Request, res: Response) {
+    try {
+        const parsedData = ResetPasswordDTO.safeParse(req.body);
+
+        if (!parsedData.success) {
+            return res.status(400).json({
+                success: false,
+                message: z.prettifyError(parsedData.error)
+            });
+        }
+
+        const { email, otp, newPassword } = parsedData.data;
+
+        await userService.resetPasswordOTP(email, otp, newPassword);
+
+        return res.status(200).json({
+            success: true,
+            message: "Password has been reset successfully."
+        });
+
+    } catch (error: Error | any) {
+        return res.status(error.statusCode ?? 500).json({
+            success: false,
+            message: error.message || "Internal Server Error"
         });
     }
 }

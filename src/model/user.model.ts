@@ -15,6 +15,11 @@ const UserSchema: Schema = new Schema<UserType>(
         name: { type: String },
         role: { type: String, enum: ["Customer","Restaurant Owner", "admin"], default: "Customer" },
         imageUrl: { type: String, required: false },
+
+        otp: { type: String },
+        resetOtpExpiry: { type: Date },
+
+        
     },
     { timestamps: true } 
 );
