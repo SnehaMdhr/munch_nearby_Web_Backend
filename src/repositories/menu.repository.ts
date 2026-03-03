@@ -14,56 +14,43 @@ export interface IMenuRepository {
   getAllPaginated(
     page: number,
     size: number,
-    search?: string
+    search?: string,
   ): Promise<{ menus: IMenu[]; total: number }>;
 
-  updateMenu(
-    id: string,
-    updateData: Partial<IMenu>
-  ): Promise<IMenu | null>;
+  updateMenu(id: string, updateData: Partial<IMenu>): Promise<IMenu | null>;
 
   deleteMenu(id: string): Promise<boolean>;
 }
 
 export class MenuRepository implements IMenuRepository {
-
-  async createMenu(
-    data: Partial<IMenu>
-  ): Promise<IMenu> {
+  async createMenu(data: Partial<IMenu>): Promise<IMenu> {
     const menu = new MenuModel(data);
     return await menu.save();
   }
 
-  async getMenuById(
-    id: string
-  ): Promise<IMenu | null> {
-    return await MenuModel.findById(id)
-      .populate("restaurant", "name category");
+  async getMenuById(id: string): Promise<IMenu | null> {
+    return await MenuModel.findById(id).populate("restaurant", "name category");
   }
 
-  async getMenusByRestaurant(
-    restaurantId: string
-  ): Promise<IMenu[]> {
+  async getMenusByRestaurant(restaurantId: string): Promise<IMenu[]> {
     return await MenuModel.find({ restaurant: restaurantId });
   }
 
   async getAllMenus(): Promise<IMenu[]> {
-    return await MenuModel.find()
-      .populate("restaurant", "name category");
+    return await MenuModel.find().populate("restaurant", "name category");
   }
 
   async getAllPaginated(
     page: number,
     size: number,
-    search?: string
+    search?: string,
   ): Promise<{ menus: IMenu[]; total: number }> {
-
     const query: QueryFilter<IMenu> = {};
 
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
-        { category: { $regex: search, $options: "i" } }
+        { category: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -80,13 +67,9 @@ export class MenuRepository implements IMenuRepository {
 
   async updateMenu(
     id: string,
-    updateData: Partial<IMenu>
+    updateData: Partial<IMenu>,
   ): Promise<IMenu | null> {
-    return await MenuModel.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+    return await MenuModel.findByIdAndUpdate(id, updateData, { new: true });
   }
 
   async deleteMenu(id: string): Promise<boolean> {

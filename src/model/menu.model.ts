@@ -6,41 +6,41 @@ const MenuSchema: Schema = new Schema(
     name: {
       type: String,
       required: true,
-      minlength: 2
+      minlength: 2,
     },
 
     description: {
-      type: String
+      type: String,
     },
 
     price: {
       type: Number,
-      required: true
+      required: true,
     },
 
     category: {
       type: String,
-      required: true
+      required: true,
     },
 
     isAvailable: {
       type: Boolean,
-      default: true
+      default: true,
     },
 
     imageUrl: {
-      type: String, 
-      required: false 
+      type: String,
+      required: false,
     },
 
     restaurant: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Restaurant", // MUST match your User model name
-          required: true,
-          unique: true // ensures one restaurant per owner
-    }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant", // MUST match your User model name
+      required: true,
+      unique: true, // ensures one restaurant per owner
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export interface IMenu extends MenuType, Document {
