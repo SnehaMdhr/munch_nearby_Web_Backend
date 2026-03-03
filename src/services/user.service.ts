@@ -186,5 +186,36 @@ async resetPasswordOTP(email?: string, otp?: string, newPassword?: string) {
     return { token: jwtToken, user };
 }
 
+
+
+async changePassword(userId: string, oldPassword?: string, newPassword?: string) {
+    if (!oldPassword || !newPassword) {
+        throw new HttpError(400, "Old password and new password are required");
+    }
+
+    const user = await userRepository.getUsersById(userId);
+
+    if (!user) {
+        throw new HttpError(404, "User not found");
+    }
+
+    if (!user.password) {
+        throw new HttpError(400, "This account uses social login");
+    }
+
+    const isMatch = await bcryptjs.compare(oldPassword, user.password);
+
+    if (!isMatch) {
+        throw new HttpError(400, "Old password is incorrect");
+    }
+
+    const hashedPassword = await bcryptjs.hash(newPassword, 10);
+
+    await userRepository.updateUser(userId, {
+        password: hashedPassword
+    });
+
+    return { message: "Password changed successfully" };
 }
 
+}

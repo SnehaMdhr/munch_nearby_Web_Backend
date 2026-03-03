@@ -1,5 +1,5 @@
 import { UserService } from "../services/user.service";
-import { CreateUserDto, LoginUserDTO, ResetPasswordDTO, UpdateUserDTO } from "../dtos/user.dtos";
+import { ChangePasswordDTO, CreateUserDto, LoginUserDTO, ResetPasswordDTO, UpdateUserDTO } from "../dtos/user.dtos";
 import { Request, Response } from "express";
 import z from "zod";
 import { GoogleLoginDTO } from "../dtos/user.dtos";
@@ -169,6 +169,42 @@ async resetPasswordOTP(req: Request, res: Response) {
         return res.status(200).json({
             success: true,
             message: "Password has been reset successfully."
+        });
+
+    } catch (error: Error | any) {
+        return res.status(error.statusCode ?? 500).json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+async changePassword(req: Request, res: Response) {
+    try {
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const parsedData = ChangePasswordDTO.safeParse(req.body);
+
+        if (!parsedData.success) {
+            return res.status(400).json({
+                success: false,
+                message: z.prettifyError(parsedData.error)
+            });
+        }
+
+        const { oldPassword, newPassword } = parsedData.data;
+
+        await userService.changePassword(userId, oldPassword, newPassword);
+
+        return res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
         });
 
     } catch (error: Error | any) {

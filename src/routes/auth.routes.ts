@@ -18,4 +18,10 @@ router.post("/reset-password", authController.resetPasswordOTP);
     
 router.post("/google-login", authController.googleLogin);
 
+router.post(
+    "/change-password",
+    authorizedMiddleware,
+    authController.changePassword
+);
+
 export default router;
