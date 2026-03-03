@@ -2,7 +2,7 @@ import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
 import { HttpError } from "../errors/http-error";
 import { ReviewRepository } from "../repositories/review.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
-import { ReviewModel } from "../model/review.model"; // Added for direct check
+import { ReviewModel } from "../model/review.model";
 import mongoose from "mongoose";
 
 const reviewRepository = new ReviewRepository();
@@ -18,9 +18,9 @@ export class ReviewService {
         $group: {
           _id: "$restaurant",
           totalReviews: { $sum: 1 },
-          averageReviews: { $avg: "$rating" }
-        }
-      }
+          averageReviews: { $avg: "$rating" },
+        },
+      },
     ]);
 
     const totalReviews = stats[0]?.totalReviews ?? 0;
@@ -28,18 +28,18 @@ export class ReviewService {
 
     await restaurantRepository.updateRestaurant(restaurantId, {
       totalReviews,
-      averageReviews: Number(averageReviews.toFixed(2))
+      averageReviews: Number(averageReviews.toFixed(2)),
     } as any);
   }
 
   async createReview(customerId: string, data: CreateReviewDTO) {
-    // 1. Check if restaurant exists
-    const restaurant = await restaurantRepository.getRestaurantById(data.restaurantId);
+    const restaurant = await restaurantRepository.getRestaurantById(
+      data.restaurantId,
+    );
     if (!restaurant) {
       throw new HttpError(404, "Restaurant not found in database");
     }
 
-    // 2. Prevent duplicate review (Optimized Database Check)
     const alreadyReviewed = await ReviewModel.findOne({
       customer: customerId,
       restaurant: data.restaurantId,
@@ -49,7 +49,6 @@ export class ReviewService {
       throw new HttpError(400, "You have already reviewed this restaurant");
     }
 
-    // 3. Create review
     const review = await reviewRepository.createReview({
       customer: new mongoose.Types.ObjectId(customerId),
       restaurant: new mongoose.Types.ObjectId(data.restaurantId),
@@ -63,7 +62,8 @@ export class ReviewService {
   }
 
   async getReviewsByRestaurant(restaurantId: string) {
-    const restaurant = await restaurantRepository.getRestaurantById(restaurantId);
+    const restaurant =
+      await restaurantRepository.getRestaurantById(restaurantId);
     if (!restaurant) throw new HttpError(404, "Restaurant not found");
 
     return await reviewRepository.getReviewsByRestaurant(restaurantId);
@@ -73,9 +73,9 @@ export class ReviewService {
     const review = await reviewRepository.getReviewById(reviewId);
     if (!review) throw new HttpError(404, "Review not found");
 
-    const restaurantId = ((review.restaurant as any)?._id || review.restaurant).toString();
-
-    // Check ownership
+    const restaurantId = (
+      (review.restaurant as any)?._id || review.restaurant
+    ).toString();
     const ownerId = (review.customer as any)._id || review.customer;
     if (ownerId.toString() !== customerId) {
       throw new HttpError(403, "Unauthorized to delete this review");
@@ -87,49 +87,58 @@ export class ReviewService {
   }
 
   async updateReview(
-  customerId: string,
-  reviewId: string,
-  data: UpdateReviewDTO
-) {
-  const review = await reviewRepository.getReviewById(reviewId);
+    customerId: string,
+    reviewId: string,
+    data: UpdateReviewDTO,
+  ) {
+    const review = await reviewRepository.getReviewById(reviewId);
 
-  if (!review) {
-    throw new HttpError(404, "Review not found");
+    if (!review) {
+      throw new HttpError(404, "Review not found");
+    }
+    const ownerId = (review.customer as any)._id || review.customer;
+
+    if (ownerId.toString() !== customerId) {
+      throw new HttpError(403, "Unauthorized to update this review");
+    }
+
+    const updatedReview = await reviewRepository.updateReview(reviewId, data);
+
+    const restaurantId = (
+      (review.restaurant as any)?._id || review.restaurant
+    ).toString();
+    await this.refreshRestaurantReviewStats(restaurantId);
+
+    return updatedReview;
   }
+  async getReviewsForOwner(ownerId: string) {
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+      throw new HttpError(400, "Invalid owner id");
+    }
 
-  // Check ownership
-  const ownerId = (review.customer as any)._id || review.customer;
+    const reviews = await reviewRepository.getReviewsForOwner(ownerId);
 
-  if (ownerId.toString() !== customerId) {
-    throw new HttpError(403, "Unauthorized to update this review");
+    if (!reviews || reviews.length === 0) {
+      return [];
+    }
+
+    return reviews;
   }
+  async adminDeleteReview(reviewId: string) {
+    const review = await reviewRepository.getReviewById(reviewId);
 
-  const updatedReview = await reviewRepository.updateReview(
-    reviewId,
-    data
-  );
+    if (!review) {
+      throw new HttpError(404, "Review not found");
+    }
 
-  const restaurantId = ((review.restaurant as any)?._id || review.restaurant).toString();
-  await this.refreshRestaurantReviewStats(restaurantId);
+    const restaurantId = (
+      (review.restaurant as any)?._id || review.restaurant
+    ).toString();
 
-  return updatedReview;
-}
+    await reviewRepository.deleteReview(reviewId);
 
-// ✅ OWNER: Get Reviews of His Restaurants
-async getReviewsForOwner(ownerId: string) {
+    await this.refreshRestaurantReviewStats(restaurantId);
 
-  if (!mongoose.Types.ObjectId.isValid(ownerId)) {
-    throw new HttpError(400, "Invalid owner id");
+    return true;
   }
-
-  const reviews = await reviewRepository.getReviewsForOwner(ownerId);
-
-  if (!reviews || reviews.length === 0) {
-    return [];
-  }
-
-  return reviews;
-}
-
-
 }
