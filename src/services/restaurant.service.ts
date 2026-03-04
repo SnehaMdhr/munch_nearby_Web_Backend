@@ -9,15 +9,45 @@ import { MenuModel } from "../model/menu.model";
 import { FavouriteModel } from "../model/favourite.model";
 import fs from "fs";
 import path from "path";
+import { RestaurantStatus } from "../types/restaurant.type";
+import { RestaurantModel } from "../model/restaurant.model";
+import { sendEmail } from "../config/email";
 
 const restaurantRepository = new RestaurantRepository();
 
 export class RestaurantService {
 
-  // ✅ Create Restaurant (1 Owner = 1 Restaurant)
+  private async cascadeDeleteRestaurant(restaurantId: string) {
+    const restaurant = await RestaurantModel.findById(restaurantId);
+
+    if (!restaurant) {
+      throw new HttpError(404, "Restaurant not found");
+    }
+
+    if (restaurant.imageUrl) {
+      try {
+        const imagePath = path.join(__dirname, '../../', restaurant.imageUrl);
+
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } catch (error) {
+        console.error("Error deleting restaurant image:", error);
+      }
+    }
+
+    await Promise.all([
+      ReviewModel.deleteMany({ restaurant: restaurantId }),
+      MenuModel.deleteMany({ restaurant: restaurantId }),
+      FavouriteModel.deleteMany({ restaurant: restaurantId })
+    ]);
+
+    await restaurantRepository.deleteRestaurant(restaurantId);
+  }
+
+
   async createRestaurant(ownerId: string, data: CreateRestaurantDTO) {
 
-  // 1️⃣ Check if owner already has a restaurant
   const existingRestaurant =
     await restaurantRepository.getRestaurantByOwner(ownerId);
 
@@ -28,7 +58,6 @@ export class RestaurantService {
   let latitude: number | null = null;
   let longitude: number | null = null;
 
-  // 2️⃣ Try extracting coordinates from Google Maps link
   if (data.mapLink) {
     const extracted = extractLatLng(data.mapLink);
 
@@ -38,7 +67,6 @@ export class RestaurantService {
     }
   }
 
-  // 3️⃣ If extraction fails → geocode using OpenStreetMap
   if (latitude === null || longitude === null) {
     const geocoded = await geocodeAddress(data.address);
 
@@ -50,13 +78,11 @@ export class RestaurantService {
     longitude = geocoded.longitude;
   }
 
-  // 4️⃣ Create GeoJSON location (Mongo format)
   const location = {
     type: "Point" as const,
     coordinates: [longitude, latitude] as [number, number], // ⚠ Mongo uses [lng, lat]
   };
 
-  // 5️⃣ Save to database
   try {
     const newRestaurant =
       await restaurantRepository.createRestaurant({
@@ -77,7 +103,6 @@ export class RestaurantService {
   }
 }
 
-  // ✅ Get Restaurant for Profile (Owner View)
   async getRestaurantByOwner(ownerId: string) {
 
     const restaurant = await restaurantRepository.getRestaurantByOwner(ownerId);
@@ -89,8 +114,6 @@ export class RestaurantService {
     return restaurant;
   }
 
-
-  // ✅ Get Restaurant By ID (Public View)
   async getRestaurantById(id: string) {
 
     const restaurant = await restaurantRepository.getRestaurantById(id);
@@ -102,15 +125,11 @@ export class RestaurantService {
     return restaurant;
   }
 
-
-  // ✅ Get All Restaurants (Homepage)
   async getAllRestaurants() {
 
     return await restaurantRepository.getAllRestaurants();
   }
 
-
-  // ✅ Get All Restaurants Paginated (Admin Panel)
   async getAllPaginated(page: number, size: number, search?: string) {
 
     return await restaurantRepository.getAllPaginated(page, size, search);
@@ -128,7 +147,6 @@ export class RestaurantService {
 
   let updatedData: any = { ...data };
 
-  // 🔥 Handle old image deletion if new image is being uploaded
   if(data.imageUrl && restaurant.imageUrl && restaurant.imageUrl !== data.imageUrl){
     try {
       const oldImagePath = path.join(__dirname, '../../', restaurant.imageUrl);
@@ -159,7 +177,6 @@ export class RestaurantService {
     updatedData
   );
 }
-  // ✅ Delete Restaurant (Owner Only) - Cascade delete all related data
   async deleteRestaurant(ownerId: string) {
 
     const restaurant = await restaurantRepository.getRestaurantByOwner(ownerId);
@@ -170,29 +187,116 @@ export class RestaurantService {
 
     const restaurantId = restaurant._id.toString();
 
-    // 🔥 Delete restaurant image if exists
-    if(restaurant.imageUrl){
-      try {
-        const imagePath = path.join(__dirname, '../../', restaurant.imageUrl);
-        
-        if(fs.existsSync(imagePath)){
-          fs.unlinkSync(imagePath);
-        }
-      } catch (error) {
-        console.error("Error deleting restaurant image:", error);
-      }
-    }
+    await this.cascadeDeleteRestaurant(restaurantId);
 
-    // 🔥 Delete all related data in parallel
-    await Promise.all([
-      ReviewModel.deleteMany({ restaurant: restaurantId }),
-      MenuModel.deleteMany({ restaurant: restaurantId }),
-      FavouriteModel.deleteMany({ restaurant: restaurantId })
-    ]);
-
-    // 🔥 Finally, delete the restaurant itself
-    const deleted = await restaurantRepository.deleteRestaurant(restaurantId);
-
-    return deleted;
+    return true;
   }
+async approveRestaurant(restaurantId: string) {
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.APPROVED },
+    { new: true }
+  ).populate("owner", "name email");
+
+  if (!restaurant) {
+    throw new HttpError(404, "Restaurant not found");
+  }
+
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "🎉 Restaurant Approved",
+      `
+        <h2>Congratulations ${owner.name}!</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> has been approved.</p>
+        <p>You can now start accepting orders.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Approval email failed:", err.message);
+    });
+  }
+
+  return restaurant;
+}
+
+async rejectRestaurant(restaurantId: string) {
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.REJECTED },
+    { new: true }
+  ).populate("owner", "name email");
+
+  if (!restaurant) {
+    throw new HttpError(404, "Restaurant not found");
+  }
+
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "❌ Restaurant Application Rejected",
+      `
+        <h2>Hello ${owner.name},</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> was rejected.</p>
+        <p>Please review and resubmit your application.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Rejection email failed:", err.message);
+    });
+  }
+
+  return restaurant;
+}
+async suspendRestaurant(restaurantId: string) {
+  const restaurant = await RestaurantModel.findByIdAndUpdate(
+    restaurantId,
+    { status: RestaurantStatus.SUSPENDED },
+    { new: true }
+  ).populate("owner", "name email");
+
+  if (!restaurant) {
+    throw new HttpError(404, "Restaurant not found");
+  }
+
+  const owner: any = restaurant.owner;
+
+  if (owner?.email) {
+    sendEmail(
+      owner.email,
+      "⚠️ Restaurant Suspended",
+      `
+        <h2>Hello ${owner.name},</h2>
+        <p>Your restaurant <strong>${restaurant.name}</strong> has been suspended.</p>
+        <p>Please contact support for more details.</p>
+        <br/>
+        <p>Best Regards,<br/>MeroApp Team</p>
+      `
+    ).catch((err) => {
+      console.warn("Suspension email failed:", err.message);
+    });
+  }
+
+  return restaurant;
+}
+async deleteRestaurantByAdmin(restaurantId: string) {
+  await this.cascadeDeleteRestaurant(restaurantId);
+
+  return true;
+}
+
+async getAllRestaurantsForAdmin() {
+  return await RestaurantModel.find({ isDeleted: false })
+    .populate("owner", "name email role")
+    .sort({ createdAt: -1 });
+}
+
+
+  
 }

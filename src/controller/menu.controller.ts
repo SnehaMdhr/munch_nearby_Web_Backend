@@ -6,8 +6,6 @@ import { CreateMenuDTO, UpdateMenuDTO } from "../dtos/menu.dtos";
 const menuService = new MenuService();
 
 export class MenuController {
-
-  // ✅ Create Menu (Owner Only)
   async createMenu(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;
@@ -15,7 +13,7 @@ export class MenuController {
       if (!ownerId) {
         return res.status(400).json({
           success: false,
-          message: "User ID not provided"
+          message: "User ID not provided",
         });
       }
 
@@ -24,7 +22,7 @@ export class MenuController {
       if (!parsedData.success) {
         return res.status(400).json({
           success: false,
-          message: z.prettifyError(parsedData.error)
+          message: z.prettifyError(parsedData.error),
         });
       }
 
@@ -32,31 +30,22 @@ export class MenuController {
         parsedData.data.imageUrl = `/uploads/${req.file.filename}`;
       }
 
-      const menu = await menuService.createMenu(
-        ownerId,
-        parsedData.data
-      );
+      const menu = await menuService.createMenu(ownerId, parsedData.data);
 
       return res.status(201).json({
         success: true,
         message: "Menu created successfully",
-        data: menu
+        data: menu,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
       });
     }
   }
 
-
-  // ✅ Get Menu By ID (Public)
-  async getMenuById(
-    req: Request<{ id: string }>,
-    res: Response
-  ) {
+  async getMenuById(req: Request<{ id: string }>, res: Response) {
     try {
       const { id } = req.params;
 
@@ -65,22 +54,19 @@ export class MenuController {
       return res.status(200).json({
         success: true,
         message: "Menu fetched successfully",
-        data: menu
+        data: menu,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
       });
     }
   }
 
-
-  // ✅ Get Menus By Restaurant (Public)
   async getMenusByRestaurant(
     req: Request<{ restaurantId: string }>,
-    res: Response
+    res: Response,
   ) {
     try {
       const { restaurantId } = req.params;
@@ -90,19 +76,16 @@ export class MenuController {
       return res.status(200).json({
         success: true,
         message: "Menus fetched successfully",
-        data: menus
+        data: menus,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
       });
     }
   }
 
-
-  // ✅ Get All Menus (Public)
   async getAllMenus(req: Request, res: Response) {
     try {
       const menus = await menuService.getAllMenus();
@@ -110,30 +93,24 @@ export class MenuController {
       return res.status(200).json({
         success: true,
         message: "Menus fetched successfully",
-        data: menus
+        data: menus,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
       });
     }
   }
 
-
-  // ✅ Update Menu (Owner Only)
-  async updateMenu(
-    req: Request<{ id: string }>,
-    res: Response
-  ) {
+  async updateMenu(req: Request<{ id: string }>, res: Response) {
     try {
       const ownerId = req.user?._id;
 
       if (!ownerId) {
         return res.status(400).json({
           success: false,
-          message: "User ID not provided"
+          message: "User ID not provided",
         });
       }
 
@@ -144,7 +121,7 @@ export class MenuController {
       if (!parsedData.success) {
         return res.status(400).json({
           success: false,
-          message: z.prettifyError(parsedData.error)
+          message: z.prettifyError(parsedData.error),
         });
       }
 
@@ -155,36 +132,30 @@ export class MenuController {
       const updatedMenu = await menuService.updateMenu(
         ownerId,
         id,
-        parsedData.data
+        parsedData.data,
       );
 
       return res.status(200).json({
         success: true,
         message: "Menu updated successfully",
-        data: updatedMenu
+        data: updatedMenu,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
       });
     }
   }
 
-
-  // ✅ Delete Menu (Owner Only)
-  async deleteMenu(
-    req: Request<{ id: string }>,
-    res: Response
-  ) {
+  async deleteMenu(req: Request<{ id: string }>, res: Response) {
     try {
       const ownerId = req.user?._id;
 
       if (!ownerId) {
         return res.status(400).json({
           success: false,
-          message: "User ID not provided"
+          message: "User ID not provided",
         });
       }
 
@@ -194,13 +165,30 @@ export class MenuController {
 
       return res.status(200).json({
         success: true,
-        message: "Menu deleted successfully"
+        message: "Menu deleted successfully",
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: error.message || "Internal Server Error"
+        message: error.message || "Internal Server Error",
+      });
+    }
+  }
+
+  async adminDeleteMenu(req: Request<{ id: string }>, res: Response) {
+    try {
+      const { id } = req.params;
+
+      await menuService.adminDeleteMenu(id);
+
+      return res.status(200).json({
+        success: true,
+        message: "Menu deleted successfully (Admin)",
+      });
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
       });
     }
   }

@@ -28,7 +28,7 @@ export const menuSchema = z.object({
   category: z.string().min(2),
   isAvailable: booleanFromFormData.default(true),
   imageUrl: z.string().optional(),
-  restaurant: z.instanceof(mongoose.Types.ObjectId)
+  restaurant: z.instanceof(mongoose.Types.ObjectId),
 });
 
 export type MenuType = z.infer<typeof menuSchema>;

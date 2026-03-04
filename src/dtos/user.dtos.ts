@@ -10,6 +10,7 @@ export const CreateUserDto = userSchema.pick(
     }
 ).extend(
     {
+        password: z.string().min(8),
         confirmPassword: z.string().min(6)
     }
 ).refine(
@@ -31,6 +32,41 @@ export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
 export const UpdateUserDTO = userSchema.omit({ role: true }).partial();
 export type UpdateUserDTO = z.infer<typeof UpdateUserDTO>;
 
-// Admin can update role field
 export const AdminUpdateUserDTO = userSchema.partial();
 export type AdminUpdateUserDTO = z.infer<typeof AdminUpdateUserDTO>;
+
+export const GoogleLoginDTO = z.object({
+    token: z.string().min(10)
+});
+
+export type GoogleLoginDTO = z.infer<typeof GoogleLoginDTO>;
+
+
+export const ResetPasswordDTO = z.object({
+    email: z.string().email(),
+    otp: z.string().length(6),
+    newPassword: z.string().min(8),
+    confirmPassword: z.string().min(8),
+}).refine(
+    (data) => data.newPassword === data.confirmPassword,
+    {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    }
+);
+
+export type ResetPasswordDTO = z.infer<typeof ResetPasswordDTO>;
+
+export const ChangePasswordDTO = z.object({
+    oldPassword: z.string().min(6),
+    newPassword: z.string().min(8),
+    confirmPassword: z.string().min(8),
+}).refine(
+    (data) => data.newPassword === data.confirmPassword,
+    {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    }
+);
+
+export type ChangePasswordDTO = z.infer<typeof ChangePasswordDTO>;

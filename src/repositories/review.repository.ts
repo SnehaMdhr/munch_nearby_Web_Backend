@@ -12,12 +12,12 @@ export interface IReviewRepository {
 
   getAllPaginated(
     page: number,
-    size: number
+    size: number,
   ): Promise<{ reviews: IReview[]; total: number }>;
 
   updateReview(
     id: string,
-    updateData: Partial<IReview>
+    updateData: Partial<IReview>,
   ): Promise<IReview | null>;
 
   deleteReview(id: string): Promise<boolean>;
@@ -26,33 +26,24 @@ export interface IReviewRepository {
 }
 
 export class ReviewRepository implements IReviewRepository {
-
-  async createReview(
-    data: Partial<IReview>
-  ): Promise<IReview> {
+  async createReview(data: Partial<IReview>): Promise<IReview> {
     const review = new ReviewModel(data);
     return await review.save();
   }
 
-  async getReviewById(
-    id: string
-  ): Promise<IReview | null> {
+  async getReviewById(id: string): Promise<IReview | null> {
     return await ReviewModel.findById(id)
-      .populate("customer", "name email")
+      .populate("customer", "name email imageUrl")
       .populate("restaurant", "name category");
   }
 
-  async getReviewsByRestaurant(
-    restaurantId: string
-  ): Promise<IReview[]> {
+  async getReviewsByRestaurant(restaurantId: string): Promise<IReview[]> {
     return await ReviewModel.find({ restaurant: restaurantId })
-      .populate("customer", "name")
+      .populate("customer", "name email imageUrl")
       .sort({ createdAt: -1 });
   }
 
-  async getReviewsByCustomer(
-    customerId: string
-  ): Promise<IReview[]> {
+  async getReviewsByCustomer(customerId: string): Promise<IReview[]> {
     return await ReviewModel.find({ customer: customerId })
       .populate("restaurant", "name category")
       .sort({ createdAt: -1 });
@@ -60,9 +51,8 @@ export class ReviewRepository implements IReviewRepository {
 
   async getAllPaginated(
     page: number,
-    size: number
+    size: number,
   ): Promise<{ reviews: IReview[]; total: number }> {
-
     const query: QueryFilter<IReview> = {};
 
     const total = await ReviewModel.countDocuments(query);
@@ -78,13 +68,9 @@ export class ReviewRepository implements IReviewRepository {
 
   async updateReview(
     id: string,
-    updateData: Partial<IReview>
+    updateData: Partial<IReview>,
   ): Promise<IReview | null> {
-    return await ReviewModel.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+    return await ReviewModel.findByIdAndUpdate(id, updateData, { new: true });
   }
 
   async deleteReview(id: string): Promise<boolean> {
@@ -97,12 +83,11 @@ export class ReviewRepository implements IReviewRepository {
       .populate({
         path: "restaurant",
         match: { owner: ownerId },
-        select: "name category"
+        select: "name category",
       })
-      .populate("customer", "name email")
+      .populate("customer", "name email imageUrl")
       .sort({ createdAt: -1 });
 
-    // Remove null restaurant results
-    return reviews.filter(r => r.restaurant);
+    return reviews.filter((r) => r.restaurant);
   }
 }

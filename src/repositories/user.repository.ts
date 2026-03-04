@@ -10,9 +10,41 @@ export interface IUserRepository {
     deleteUser(id:string): Promise<boolean>;
      getAllPaginated(page: number, size: number, search?: string)
         : Promise<{ users: IUser[]; total: number }>;
+
+    setResetOtp(email: string, otp: string, expiry: Date): Promise<void>;
+    updatePasswordByEmail(email: string, newPassword: string): Promise<void>;
+    clearResetOtp(email: string): Promise<void>;
 }
 
 export class UserRepository implements IUserRepository {
+    async setResetOtp(email: string, otp: string, expiry: Date): Promise<void> {
+    await UserModel.updateOne(
+        { email },
+        {
+            otp: otp,
+            resetOtpExpiry: expiry
+        }
+    );
+}
+
+async updatePasswordByEmail(email: string, newPassword: string): Promise<void> {
+    await UserModel.updateOne(
+        { email },
+        { password: newPassword }
+    );
+}
+
+async clearResetOtp(email: string): Promise<void> {
+    await UserModel.updateOne(
+        { email },
+        {
+            $unset: {
+                otp: "",
+                resetOtpExpiry: ""
+            }
+        }
+    );
+}
     async createUser(userData: Partial<IUser>): Promise<IUser> {
         const user = new UserModel(userData);
         return await user.save();
@@ -40,7 +72,7 @@ export class UserRepository implements IUserRepository {
     const users = await UserModel.find(query)
         .skip((page - 1) * size)
         .limit(size)
-        .select('name email role createdAt') // send only what admin needs
+        .select('name email role createdAt imageUrl') 
         .sort({ createdAt: -1 });
 
         return { users, total };

@@ -10,10 +10,18 @@ router.post("/register", authController.register)
 router.post("/login",authController.login)
 router.get("/whoami", authorizedMiddleware, authController.getUserById);
 router.put("/update-profile", authorizedMiddleware,uploads.single("image"),authController.updateUser);
+
 router.post(
-    '/request-password-reset',
-    authController.requestPasswordReset
-)
-router.post("/reset-password/:token", authController.resetPassword);
+    "/request-password-reset", authController.requestPasswordResetOTP
+);
+router.post("/reset-password", authController.resetPasswordOTP);
+    
+router.post("/google-login", authController.googleLogin);
+
+router.post(
+    "/change-password",
+    authorizedMiddleware,
+    authController.changePassword
+);
 
 export default router;

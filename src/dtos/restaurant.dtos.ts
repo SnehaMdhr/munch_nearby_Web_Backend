@@ -21,7 +21,9 @@ export const UpdateRestaurantDTO = restaurantSchema
     totalReviews: true,
     averageReviews: true,
     menus: true,
-    reviews: true
+    reviews: true,
+    status: true,
+    isDeleted: true
   })
   .partial();
 

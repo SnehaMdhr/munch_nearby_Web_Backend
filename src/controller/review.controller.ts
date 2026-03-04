@@ -4,18 +4,17 @@ import { CreateReviewDTO, UpdateReviewDTO } from "../dtos/review.dtos";
 const reviewService = new ReviewService();
 
 export class ReviewController {
-  // ✅ Create Review (Fixed Zod parsing)
   async createReview(req: Request<{ restaurantId: string }>, res: Response) {
     try {
       const customerId = req.user?._id;
 
       if (!customerId) {
-        return res.status(401).json({ success: false, message: "Unauthorized: No user ID" });
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized: No user ID" });
       }
 
       const { restaurantId } = req.params;
-
-      // Validate data and merge restaurantId from URL
       const parsedData = CreateReviewDTO.safeParse({
         ...req.body,
         restaurantId,
@@ -29,7 +28,10 @@ export class ReviewController {
         });
       }
 
-      const review = await reviewService.createReview(customerId.toString(), parsedData.data);
+      const review = await reviewService.createReview(
+        customerId.toString(),
+        parsedData.data,
+      );
 
       return res.status(201).json({
         success: true,
@@ -44,9 +46,10 @@ export class ReviewController {
       });
     }
   }
-
-  // ✅ Get Reviews By Restaurant
-  async getReviewsByRestaurant(req: Request<{ restaurantId: string }>, res: Response) {
+  async getReviewsByRestaurant(
+    req: Request<{ restaurantId: string }>,
+    res: Response,
+  ) {
     try {
       const { restaurantId } = req.params;
       const reviews = await reviewService.getReviewsByRestaurant(restaurantId);
@@ -62,12 +65,13 @@ export class ReviewController {
       });
     }
   }
-
-  // ✅ Delete Review
   async deleteReview(req: Request<{ id: string }>, res: Response) {
     try {
       const customerId = req.user?._id;
-      if (!customerId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!customerId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       await reviewService.deleteReview(customerId.toString(), req.params.id);
 
@@ -79,50 +83,47 @@ export class ReviewController {
       });
     }
   }
+  async updateReview(req: Request<{ id: string }>, res: Response) {
+    try {
+      const customerId = req.user?._id;
 
-  // ✅ Update Review
-async updateReview(req: Request<{ id: string }>, res: Response) {
-  try {
-    const customerId = req.user?._id;
+      if (!customerId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
 
-    if (!customerId) {
-      return res.status(401).json({
+      const parsedData = UpdateReviewDTO.safeParse(req.body);
+
+      if (!parsedData.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: parsedData.error.flatten().fieldErrors,
+        });
+      }
+
+      const updatedReview = await reviewService.updateReview(
+        customerId.toString(),
+        req.params.id,
+        parsedData.data,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Review updated successfully",
+        data: updatedReview,
+      });
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 500).json({
         success: false,
-        message: "Unauthorized",
+        message: error.message || "Internal Server Error",
       });
     }
-
-    const parsedData = UpdateReviewDTO.safeParse(req.body);
-
-    if (!parsedData.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: parsedData.error.flatten().fieldErrors,
-      });
-    }
-
-    const updatedReview = await reviewService.updateReview(
-      customerId.toString(),
-      req.params.id,
-      parsedData.data
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Review updated successfully",
-      data: updatedReview,
-    });
-
-  } catch (error: any) {
-    return res.status(error.statusCode ?? 500).json({
-      success: false,
-      message: error.message || "Internal Server Error",
-    });
   }
-}
 
- async getReviewsForOwner(req: Request, res: Response) {
+  async getReviewsForOwner(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;
 
@@ -134,14 +135,13 @@ async updateReview(req: Request<{ id: string }>, res: Response) {
       }
 
       const reviews = await reviewService.getReviewsForOwner(
-        ownerId.toString()
+        ownerId.toString(),
       );
 
       return res.status(200).json({
         success: true,
         data: reviews,
       });
-
     } catch (error: any) {
       return res.status(error.statusCode ?? 500).json({
         success: false,
@@ -149,6 +149,19 @@ async updateReview(req: Request<{ id: string }>, res: Response) {
       });
     }
   }
+  async adminDeleteReview(req: Request<{ id: string }>, res: Response) {
+    try {
+      await reviewService.adminDeleteReview(req.params.id);
 
-
+      return res.status(200).json({
+        success: true,
+        message: "Review deleted by admin",
+      });
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RestaurantController } from "../controller/restaurant.controller";
-import { authorizedMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
+import { adminOnlyMiddleware, authorizedMiddleware, restaurantOwnerOnlyMiddleware } from "../middlewares/authorized.middleware";
 import { uploads } from "../middlewares/upload.middleware";
 
 const router = Router();
@@ -50,5 +50,41 @@ router.delete(
   restaurantOwnerOnlyMiddleware,
   restaurantController.deleteRestaurant
 );
+
+
+  router.get(
+    "/admin/restaurants",
+    authorizedMiddleware,
+    adminOnlyMiddleware,
+    restaurantController.getAllRestaurantsForAdmin
+  );
+
+  router.patch(
+    "/admin/restaurants/:id/approve",
+    authorizedMiddleware,
+    adminOnlyMiddleware,
+    restaurantController.approveRestaurant
+  );
+
+  router.patch(
+    "/admin/restaurants/:id/reject",
+    authorizedMiddleware,
+    adminOnlyMiddleware,
+    restaurantController.rejectRestaurant
+  );
+
+  router.patch(
+    "/admin/restaurants/:id/suspend",
+    authorizedMiddleware,
+    adminOnlyMiddleware,
+    restaurantController.suspendRestaurant
+  );
+
+  router.delete(
+    "/admin/restaurants/:id",
+    authorizedMiddleware,
+    adminOnlyMiddleware,
+    restaurantController.deleteRestaurantByAdmin
+  );
 
 export default router;
