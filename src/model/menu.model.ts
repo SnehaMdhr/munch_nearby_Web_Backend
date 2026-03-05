@@ -37,7 +37,6 @@ const MenuSchema: Schema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Restaurant", // MUST match your User model name
       required: true,
-      unique: true, // ensures one restaurant per owner
     },
   },
   { timestamps: true },

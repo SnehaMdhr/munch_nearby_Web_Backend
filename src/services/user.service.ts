@@ -15,6 +15,15 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 let userRepository = new UserRepository;
 
+const resolveUploadFilePath = (imageUrl: string) => {
+    if (!imageUrl.startsWith("/uploads/")) {
+        return null;
+    }
+
+    const filename = path.basename(imageUrl);
+    return path.resolve(process.cwd(), "uploads", filename);
+};
+
 export class UserService {
     async createUser(data:CreateUserDto) {
 
@@ -72,9 +81,9 @@ export class UserService {
         
         if(data.imageUrl && user.imageUrl && user.imageUrl !== data.imageUrl){
             try {
-                const oldImagePath = path.join(__dirname, '../../', user.imageUrl);
+                const oldImagePath = resolveUploadFilePath(user.imageUrl);
     
-                if(fs.existsSync(oldImagePath)){
+                if(oldImagePath && fs.existsSync(oldImagePath)){
                     fs.unlinkSync(oldImagePath);
                 }
             } catch (error) {
