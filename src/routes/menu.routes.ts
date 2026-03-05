@@ -31,6 +31,14 @@ router.put(
   uploads.single("imageUrl"),
   menuController.updateMenu,
 );
+
+router.delete(
+  "/delete/:id",
+  authorizedMiddleware,
+  restaurantOwnerOnlyMiddleware,
+  menuController.deleteMenu,
+);
+
 router.delete(
   "/admin/delete/:id",
   authorizedMiddleware,
