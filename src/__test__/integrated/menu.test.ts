@@ -9,6 +9,7 @@ let ownerToken: string;
 let adminToken: string;
 let restaurantId: string;
 let menuId: string;
+let secondMenuId: string;
 
 const ownerUser = {
   email: `owner${Date.now()}@mail.com`,
@@ -26,7 +27,7 @@ const adminUser = {
   role: "admin",
 };
 
-describe("MENU API - 15 TESTS", () => {
+describe("MENU API - 13 TESTS", () => {
   // Combined test for setup (register owner, login, register admin, login admin, create restaurant)
   test("1. Setup: Register owner, login, register admin, login admin, create restaurant", async () => {
     // Register owner
@@ -91,8 +92,24 @@ describe("MENU API - 15 TESTS", () => {
     menuId = res.body.data._id;
   });
 
-  // 3️⃣ Fail Create Without Token
-  test("3. Create menu without token should fail", async () => {
+  test("3. Owner can create second menu for same restaurant", async () => {
+    const res = await request(app)
+      .post("/api/menu/create")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        name: "Pasta",
+        price: 18,
+        category: "Main Course",
+        restaurant: restaurantId,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data._id).toBeDefined();
+    secondMenuId = res.body.data._id;
+  });
+
+  // 4️⃣ Fail Create Without Token
+  test("4. Create menu without token should fail", async () => {
     const res = await request(app).post("/api/menu/create").send({
       name: "Burger",
       price: 15,
@@ -102,20 +119,22 @@ describe("MENU API - 15 TESTS", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  // 4️⃣ Get All Menus
-  test("4. Get all menus", async () => {
+  // 5️⃣ Get All Menus
+  test("5. Get all menus", async () => {
     const res = await request(app).get("/api/menu");
     expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(2);
   });
 
-  // 5️⃣ Get Menu By ID
-  test("5. Get menu by id", async () => {
+  // 6️⃣ Get Menu By ID
+  test("6. Get menu by id", async () => {
     const res = await request(app).get(`/api/menu/${menuId}`);
     expect(res.status).toBe(200);
   });
 
-  // 6️⃣ Owner Updates Menu
-  test("6. Owner updates menu", async () => {
+  // 7️⃣ Owner Updates Menu
+  test("7. Owner updates menu", async () => {
     const res = await request(app)
       .put(`/api/menu/update/${menuId}`)
       .set("Authorization", `Bearer ${ownerToken}`)
@@ -124,8 +143,8 @@ describe("MENU API - 15 TESTS", () => {
     expect(res.status).toBe(200);
   });
 
-  // 7️⃣ Update Without Token
-  test("7. Update without token should fail", async () => {
+  // 8️⃣ Update Without Token
+  test("8. Update without token should fail", async () => {
     const res = await request(app)
       .put(`/api/menu/update/${menuId}`)
       .send({ price: 30 });
@@ -133,8 +152,8 @@ describe("MENU API - 15 TESTS", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  // 8️⃣ Admin Deletes Menu
-  test("8. Admin deletes menu", async () => {
+  // 9️⃣ Admin Deletes Menu
+  test("9. Admin deletes menu", async () => {
     const res = await request(app)
       .delete(`/api/menu/admin/delete/${menuId}`)
       .set("Authorization", `Bearer ${adminToken}`);
@@ -142,8 +161,8 @@ describe("MENU API - 15 TESTS", () => {
     expect(res.status).toBe(200);
   });
 
-  // 9️⃣ Owner Cannot Delete via Admin Route
-  test("9. Owner cannot delete via admin route", async () => {
+  // 🔟 Owner Cannot Delete via Admin Route
+  test("10. Owner cannot delete via admin route", async () => {
     const res = await request(app)
       .delete(`/api/menu/admin/delete/${menuId}`)
       .set("Authorization", `Bearer ${ownerToken}`);
@@ -151,14 +170,22 @@ describe("MENU API - 15 TESTS", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  // 🔟 Deleted Menu Should Not Exist
-  test("10. Deleted menu should return error", async () => {
+  // 1️⃣1️⃣ Deleted Menu Should Not Exist
+  test("11. Deleted menu should return error", async () => {
     const res = await request(app).get(`/api/menu/${menuId}`);
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  // 1️⃣1️⃣ Cleanup Test Data
-  test("11. Cleanup test data", async () => {
+  test("12. Admin deletes second menu", async () => {
+    const res = await request(app)
+      .delete(`/api/menu/admin/delete/${secondMenuId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // 1️⃣3️⃣ Cleanup Test Data
+  test("13. Cleanup test data", async () => {
     await MenuModel.deleteMany({ restaurant: restaurantId });
     await RestaurantModel.deleteMany({ _id: restaurantId });
     await UserModel.deleteMany({
