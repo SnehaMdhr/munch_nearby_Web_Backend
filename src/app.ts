@@ -5,21 +5,19 @@ import authRoute from "./routes/auth.routes";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
-import path from "path";
-import fs from "fs";
 import restaurantRoute from "./routes/restaurant.routes";
 import menuRoutes from "./routes/menu.routes";
 import favouriteRoutes from "./routes/favourite.routes";
 import reviewRoutes from "./routes/review.routes";
+import { ensureUploadsDir, uploadsDir } from "./utils/upload-path";
 
 dotenv.config();
 console.log(process.env.PORT);
 const app: Application = express();
 
-const uploadsPath = path.resolve(process.cwd(), "uploads");
-fs.mkdirSync(uploadsPath, { recursive: true });
+ensureUploadsDir();
 
-app.use("/uploads", express.static(uploadsPath));
+app.use("/uploads", express.static(uploadsDir));
 // app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 let corsOptions = {
   origin: ["http://localhost:5050"],

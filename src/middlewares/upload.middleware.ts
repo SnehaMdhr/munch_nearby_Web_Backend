@@ -4,13 +4,10 @@ import path from "path";
 import fs from "fs";
 import { Request } from "express";
 import { HttpError } from "../errors/http-error";
-
-const uploadDir = path.resolve(process.cwd(), "uploads");
+import { ensureUploadsDir, uploadsDir } from "../utils/upload-path";
 
 const ensureUploadDir = () => {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  ensureUploadsDir();
 };
 
 ensureUploadDir();
@@ -19,7 +16,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Re-check before every write in case the folder was removed at runtime.
     ensureUploadDir();
-    cb(null, uploadDir);
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
