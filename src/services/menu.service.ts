@@ -2,8 +2,7 @@ import { CreateMenuDTO, UpdateMenuDTO } from "../dtos/menu.dtos";
 import { HttpError } from "../errors/http-error";
 import { MenuRepository } from "../repositories/menu.repository";
 import { RestaurantRepository } from "../repositories/restaurant.repositiry";
-import fs from "fs";
-import path from "path";
+import { deleteUploadIfExists } from "../utils/upload-path";
 
 const menuRepository = new MenuRepository();
 const restaurantRepository = new RestaurantRepository();
@@ -63,16 +62,7 @@ export class MenuService {
 
     if (data.imageUrl && menu.imageUrl && menu.imageUrl !== data.imageUrl) {
       try {
-        const oldImageFilename = path.basename(menu.imageUrl);
-        const oldImagePath = path.resolve(
-          __dirname,
-          "../../uploads",
-          oldImageFilename,
-        );
-
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
+        deleteUploadIfExists(menu.imageUrl);
       } catch (error) {
         console.error("Error deleting old menu image:", error);
       }
@@ -98,16 +88,7 @@ export class MenuService {
 
     if (menu.imageUrl) {
       try {
-        const imageFilename = path.basename(menu.imageUrl);
-        const imagePath = path.resolve(
-          __dirname,
-          "../../uploads",
-          imageFilename,
-        );
-
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
+        deleteUploadIfExists(menu.imageUrl);
       } catch (error) {
         console.error("Error deleting menu image:", error);
       }
@@ -127,16 +108,7 @@ export class MenuService {
 
     if (menu.imageUrl) {
       try {
-        const imageFilename = path.basename(menu.imageUrl);
-        const imagePath = path.resolve(
-          __dirname,
-          "../../uploads",
-          imageFilename,
-        );
-
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
+        deleteUploadIfExists(menu.imageUrl);
       } catch (error) {
         console.error("Error deleting menu image:", error);
       }

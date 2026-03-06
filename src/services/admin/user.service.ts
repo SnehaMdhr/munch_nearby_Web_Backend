@@ -1,88 +1,83 @@
 import { UserRepository } from "../../repositories/user.repository";
-import bcryptjs from "bcryptjs"
+import bcryptjs from "bcryptjs";
 import { CreateUserDto, AdminUpdateUserDTO } from "../../dtos/user.dtos";
 import { HttpError } from "../../errors/http-error";
-import fs from "fs";
-import path from "path";
+import { deleteUploadIfExists } from "../../utils/upload-path";
 let userRepository = new UserRepository();
 export class AdminUserService {
-    async createUser(data: CreateUserDto){
-        const emailCheck = await userRepository.getUserByEmail(data.email);
-        if(emailCheck){
-            throw new HttpError(403, "Email already in use");
-        }
-        // hash password
-        const hashedPassword = await bcryptjs.hash(data.password, 10); // 10 - complexity
-        data.password = hashedPassword;
-
-        const newUser = await userRepository.createUser(data);
-        return newUser;
+  async createUser(data: CreateUserDto) {
+    const emailCheck = await userRepository.getUserByEmail(data.email);
+    if (emailCheck) {
+      throw new HttpError(403, "Email already in use");
     }
-    async getAllUsers(page?: string, size?: string, search?: string) {
+    // hash password
+    const hashedPassword = await bcryptjs.hash(data.password, 10); // 10 - complexity
+    data.password = hashedPassword;
+
+    const newUser = await userRepository.createUser(data);
+    return newUser;
+  }
+  async getAllUsers(page?: string, size?: string, search?: string) {
     const pageNumber = page ? parseInt(page, 10) : 1;
     const pageSize = size ? parseInt(size, 10) : 10;
 
     const { users, total } = await userRepository.getAllPaginated(
-        pageNumber,
-        pageSize,
-        search
+      pageNumber,
+      pageSize,
+      search,
     );
 
     const pagination = {
-        page: pageNumber,
-        size: pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
+      page: pageNumber,
+      size: pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
     };
 
     return { users, pagination };
-}
-    async getOneUser(id: string){
-        const user = await userRepository.getUsersById(id);
-        if(!user){
-            throw new HttpError(404, "User not found");
-        }
-        return user;
+  }
+  async getOneUser(id: string) {
+    const user = await userRepository.getUsersById(id);
+    if (!user) {
+      throw new HttpError(404, "User not found");
     }
-    async deleteUser(id: string) {
-        const user = await userRepository.getUsersById(id);
-        
-        // 🔥 Delete user image if exists
-        if(user && user.imageUrl){
-            try {
-                const imagePath = path.join(__dirname, '../../../', user.imageUrl);
-                
-                if(fs.existsSync(imagePath)){
-                    fs.unlinkSync(imagePath);
-                }
-            } catch (error) {
-                console.error("Error deleting user image:", error);
-            }
-        }
-        
-        const isDeleted = await userRepository.deleteUser(id);
-        return isDeleted;
+    return user;
+  }
+  async deleteUser(id: string) {
+    const user = await userRepository.getUsersById(id);
+
+    // 🔥 Delete user image if exists
+    if (user && user.imageUrl) {
+      try {
+        deleteUploadIfExists(user.imageUrl);
+      } catch (error) {
+        console.error("Error deleting user image:", error);
+      }
     }
-    async updateUser(id: string, updateData: AdminUpdateUserDTO){
-        const user = await userRepository.getUsersById(id);
-        if(!user){
-            throw new HttpError(404, "User not found");
-        }
-        
-        // 🔥 Handle old image deletion if new image is being uploaded
-        if(updateData.imageUrl && user.imageUrl && user.imageUrl !== updateData.imageUrl){
-            try {
-                const oldImagePath = path.join(__dirname, '../../../', user.imageUrl);
-                
-                if(fs.existsSync(oldImagePath)){
-                    fs.unlinkSync(oldImagePath);
-                }
-            } catch (error) {
-                console.error("Error deleting old user image:", error);
-            }
-        }
-        
-        const updatedUser = await userRepository.updateUser(id, updateData);
-        return updatedUser;
+
+    const isDeleted = await userRepository.deleteUser(id);
+    return isDeleted;
+  }
+  async updateUser(id: string, updateData: AdminUpdateUserDTO) {
+    const user = await userRepository.getUsersById(id);
+    if (!user) {
+      throw new HttpError(404, "User not found");
     }
+
+    // 🔥 Handle old image deletion if new image is being uploaded
+    if (
+      updateData.imageUrl &&
+      user.imageUrl &&
+      user.imageUrl !== updateData.imageUrl
+    ) {
+      try {
+        deleteUploadIfExists(user.imageUrl);
+      } catch (error) {
+        console.error("Error deleting old user image:", error);
+      }
+    }
+
+    const updatedUser = await userRepository.updateUser(id, updateData);
+    return updatedUser;
+  }
 }
